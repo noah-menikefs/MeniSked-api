@@ -202,15 +202,21 @@ const database = {
 	notes: [
 		{
 			id: 0,
-			page: "call",
+			type: "numbers",
 			date: "05/02/2020",
-			msg: "This is a busy call day"
+			msg: "0  2  +1"
 		},
 		{
 			id: 1,
-			page: "published",
+			type: "visible",
 			date: "05/21/2020",
-			msg: "St Joes is under construction this day"
+			msg: "Armogan + 1"
+		},
+		{
+			id: 2,
+			type: "invisible",
+			date: "05/25/2020",
+			msg: "busy day"
 		}
 	]
 
@@ -408,14 +414,21 @@ app.put('/callTypes', (req, res) => {
 app.delete('/callTypes', (req,res) => {
 	const {id} = req.body;
 	let index = -1;
+	let priority = -1;
 	for (let i = 0; i < database.callTypes.length; i++){
 		if (database.callTypes[i].id === id){
 			index = i;
+			priority = database.callTypes[i].priority;
 			break;
 		}
 	}
 	if (index !== -1){
 		database.callTypes.splice(index,1);
+		for (let n = 0; n < database.callTypes.length; n++){
+			if (database.callTypes[n].priority > priority){
+				database.callTypes[n].priority = database.callTypes[n].priority - 1;
+			}
+		}
 		res.json(database.callTypes);
 	}
 	else{
@@ -536,11 +549,10 @@ app.get('/account/:id', (req,res) => {
 })
 
 //Add note
-app.post('/sked/notes/:type', (req, res) => {
-	const {type} = req.params;
-	const {id, date, msg} = req.body;
+app.post('/sked/notes', (req, res) => {
+	const {date, msg, type} = req.body;
 	database.notes.push({
-		id: id,
+		id: (database.notes.length + 20),
 		type: type,
 		date: date,
 		msg: msg
