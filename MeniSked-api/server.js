@@ -13,7 +13,7 @@ app.use(cors())
 const database = {
 	users: [
 		{
-			id: '1',
+			id: 1,
 			firstName: 'John',
 			lastName: 'Smith',
 			password: 'cookies',
@@ -21,10 +21,20 @@ const database = {
 			colour: '#ADD8E6',
 			department: 'ST-JOES-A',
 			isAdmin: false,
-			isActive: true
+			isActive: true,
+			workSked: [
+				{
+					id: 0,
+					date: "05/29/2020"
+				},
+				{
+					id: 8,
+					date: "08/07/2020"
+				}
+			]
 		},
 		{
-			id: '2',
+			id: 2,
 			firstName: 'Sally',
 			lastName: 'Jenkins',
 			password: 'bananas',
@@ -32,10 +42,20 @@ const database = {
 			colour: '#FFCCCB',
 			department: 'ST-JOES-A',
 			isAdmin: false,
-			isActive: true
+			isActive: true,
+			workSked: [
+				{
+					id: 2,
+					date: "06/09/2020"
+				},
+				{
+					id: 4,
+					date: "06/21/2020"
+				}
+			]
 		},
 		{
-			id: '0',
+			id: 0,
 			firstName: 'Peter',
 			lastName: 'Menikefs',
 			password: '123',
@@ -43,7 +63,17 @@ const database = {
 			colour: '#FFC0CB',
 			department: 'ST-JOES-A Admin',
 			isAdmin: true,
-			isActive: true
+			isActive: true,
+			workSked: [
+				{
+					id: 2,
+					date: "07/19/2020"
+				},
+				{
+					id: 3,
+					date: "06/29/2020"
+				}
+			]
 		}
 	],
 	login: [
@@ -95,21 +125,54 @@ const database = {
 
 		]
 	],
-	callTypes: [
+	entries: [
 		{
 			id: 0,
+			name: "Request No Call"
+		},
+		{
+			id: 1,
+			name: "No Assignment"
+		},
+		{
+			id: 2,
+			name: "Not Available"
+		},
+		{
+			id: 3,
+			name: "Vacation"
+		},
+		{
+			id: 4,
+			name: "Staycation"
+		},
+		{
+			id: 5,
+			name: "Not Available Night"
+		},
+		{
+			id: 6,
+			name: "Assign Specific Call"
+		}
+
+
+
+	],
+	callTypes: [
+		{
+			id: 7,
 			name: "1st Call Day",
 			priority: 1,
 			active: true
 		},
 		{
-			id: 1,
+			id: 8,
 			name: "1st Call Night",
 			priority: 2,
 			active: true
 		},
 		{
-			id: 2,
+			id: 9,
 			name: "2nd Call Day",
 			priority: 3,
 			active: true
@@ -180,7 +243,8 @@ app.post('/register', (req, res) => {
 		colour: '#FFFF99',
 		department: department,
 		isAdmin: isAdmin,
-		isActive: true
+		isActive: true,
+		workSked: []
 	})
 	res.json(database.users[database.users.length -1]);
 })
@@ -295,7 +359,7 @@ app.post('/callTypes', (req,res) => {
 		})
 	}
 	database.callTypes.push({
-		id: database.callTypes.length,
+		id: (database.callTypes.length+20),
 		name: name,
 		priority: priority,
 		active: active
@@ -375,7 +439,8 @@ app.post('/people', (req, res) => {
 		colour: '#FFFF99',
 		department: department,
 		isAdmin: false,
-		isActive: true
+		isActive: true,
+		workSked: []
 	})
 
 	//USE NODEMAILER HERE
@@ -491,9 +556,33 @@ app.get('/sked/docs', (req, res) => {
 	res.json(arr);
 })
 
+//Get entry types
+app.get('/sked/entries', (req,res) => {
+	res.json(database.entries);
+})
+
+//Admin assign call
+app.post('/sked/assign', (req,res) => {
+	const {docId, typeId, date} = req.body;
+	for (let i = 0; i < database.users.length; i++){
+		if (database.users[i].id === docId){
+			database.users[i].workSked.push({
+				id: typeId,
+				date: date
+			})
+			return res.json(database.users[i]);
+		}
+	}
+	res.json('user not found');
+})
+
 app.listen(3000, () => {
 	console.log('app is running on port 3000');
 })
+
+
+
+
 
 
 // //Hashing
