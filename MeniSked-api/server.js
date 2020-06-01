@@ -101,26 +101,11 @@ const database = {
 		[
 			{
 				name: "Party",
-				eventSked: [
-					{
-						date: "12/21/2020"
-					},
-					{
-						date: "01/12/2021"
-					}
-				]
+				eventSked: ["12/21/2020","01/12/2021"]
 			},
 			{
 				name: "Easter",
-				eventSked: [
-					{
-						date: "04/12/2020"
-					},
-					{
-						date: "04/04/2021"
-					},
-
-				]
+				eventSked: ["04/12/2020","04/04/2021"]
 			}
 
 		]
@@ -201,20 +186,20 @@ const database = {
 	],
 	notes: [
 		{
-			id: 0,
-			type: "numbers",
+			id: 1,
+			type: 1,
 			date: "05/02/2020",
 			msg: "0  2  +1"
 		},
 		{
-			id: 1,
-			type: "visible",
+			id: 2,
+			type: 2,
 			date: "05/21/2020",
 			msg: "Armogan + 1"
 		},
 		{
-			id: 2,
-			type: "invisible",
+			id: 3,
+			type: 3,
 			date: "05/25/2020",
 			msg: "busy day"
 		}
@@ -344,9 +329,7 @@ app.post('/holiday/snr', (req,res) => {
 		}
 	}
 	if (index !== -1){
-		database.holidays[1][index].eventSked.push({
-			date: month+"/"+day+"/"+year
-		})
+		database.holidays[1][index].eventSked.push(month+'/'+day+'/'+year);
 		res.json(database.holidays[1][index].eventSked[database.holidays[1][index].eventSked.length - 1]);
 	}
 	else{
@@ -557,8 +540,14 @@ app.post('/sked/notes', (req, res) => {
 		date: date,
 		msg: msg
 	})
-	res.json(database.notes[database.notes -1]);
+	res.json(database.notes[database.notes.length -1]);
 })
+
+//Getting all notes 
+app.get('/sked/allNotes', (req, res) => {
+	res.json(database.notes);
+})
+
 
 //Get active doctors
 app.get('/sked/docs', (req, res) => {
