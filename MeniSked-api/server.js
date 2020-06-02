@@ -29,7 +29,7 @@ const database = {
 				},
 				{
 					id: 8,
-					date: "08/07/2020"
+					date: "08/7/2020"
 				}
 			]
 		},
@@ -46,7 +46,7 @@ const database = {
 			workSked: [
 				{
 					id: 2,
-					date: "06/09/2020"
+					date: "06/9/2020"
 				},
 				{
 					id: 4,
@@ -565,8 +565,20 @@ app.get('/sked/entries', (req,res) => {
 //Admin assign call
 app.post('/sked/assign', (req,res) => {
 	const {docId, typeId, date} = req.body;
+	let index = -1;
 	for (let i = 0; i < database.users.length; i++){
 		if (database.users[i].id === docId){
+			for (let j = 0; j < database.users[i].workSked.length; j++){
+				if (database.users[i].workSked[j].date === date){
+					index = j;
+					break;
+
+				}
+			}
+			if (index !== -1){
+				database.users[i].workSked.splice(index, 1);
+			}
+
 			database.users[i].workSked.push({
 				id: typeId,
 				date: date
@@ -575,6 +587,29 @@ app.post('/sked/assign', (req,res) => {
 		}
 	}
 	res.json('user not found');
+})
+
+//Admin delete call
+app.delete('/sked/assign', (req,res) => {
+	const {docId, date, typeId} = req.body;
+	let index = -1;
+	for (let i = 0; i < database.users.length; i++){
+		if (database.users[i].id === docId){
+			for (let j = 0; j < database.users[i].workSked.length; j++){
+				if (database.users[i].workSked[j].date === date){
+					index = j;
+					break;
+
+				}
+			}
+			if (index !== -1){
+				database.users[i].workSked.splice(index, 1);
+			}
+			return res.json(database.users[i]);
+		}
+	}
+	res.json('user not found');
+
 })
 
 app.listen(3000, () => {
