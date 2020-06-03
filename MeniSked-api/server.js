@@ -113,31 +113,38 @@ const database = {
 	entries: [
 		{
 			id: 0,
-			name: "Request No Call"
+			name: "Request No Call",
+			isActive: true
 		},
 		{
 			id: 1,
-			name: "No Assignment"
+			name: "No Assignment",
+			isActive: true
 		},
 		{
 			id: 2,
-			name: "Not Available"
+			name: "Not Available",
+			isActive: true
 		},
 		{
 			id: 3,
-			name: "Vacation"
+			name: "Vacation",
+			isActive: true
 		},
 		{
 			id: 4,
-			name: "Staycation"
+			name: "Staycation",
+			isActive: true
 		},
 		{
 			id: 5,
-			name: "Not Available Night"
+			name: "Not Available Night",
+			isActive: true
 		},
 		{
 			id: 6,
-			name: "Assign Specific Call"
+			name: "Assign Specific Call",
+			isActive: true
 		}
 
 
@@ -560,6 +567,46 @@ app.get('/sked/docs', (req, res) => {
 //Get entry types
 app.get('/sked/entries', (req,res) => {
 	res.json(database.entries);
+})
+
+//Add entry type
+app.post('/entries', (req,res) => {
+	const {name, active} = req.body;
+	database.entries.push({
+		id: database.entries.length + 20,
+		name: name,
+		isActive: active
+	})
+	res.json(database.entries[database.entries.length-1]);
+})
+
+//Delete entry type
+app.delete('/entries', (req, res) => {
+	const {id} = req.body;
+	let index = -1;
+	for (let i = 0; i < database.entries.length; i++){
+		if (database.entries[i].id === id){
+			index = i;
+		}
+	}
+	if (index !== -1){
+		database.entries.splice(index,1);
+		return res.json(database.entries);
+	}
+	res.json('entry not found');
+})
+
+//Edit entry type
+app.put('/entries', (req,res) => {
+	const {id, name, active} = req.body;
+	for (let i = 0; i < database.entries.length; i++){
+		if (database.entries[i].id === id){
+			database.entries[i].name = name;
+			database.entries[i].isActive = active;
+			return res.json(database.entries[i]);
+		}
+	}
+	res.json('entry not found');
 })
 
 //Admin assign call
