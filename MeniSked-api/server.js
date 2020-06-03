@@ -39,7 +39,7 @@ const database = {
 			lastName: 'Jenkins',
 			password: 'bananas',
 			email: 'sally@gmail.com',
-			colour: '#FFCCCB',
+			colour: '#90EE90',
 			department: 'ST-JOES-A',
 			isAdmin: false,
 			isActive: true,
@@ -195,7 +195,7 @@ const database = {
 		{
 			id: 1,
 			type: 1,
-			date: "05/02/2020",
+			date: "05/2/2020",
 			msg: "0  2  +1"
 		},
 		{
