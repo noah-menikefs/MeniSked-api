@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 var bcrypt = require('bcryptjs');
 const cors = require('cors');
+const nodemailer = require("nodemailer");
+var generatePassword = require("password-generator");
 
 const app = express();
 
@@ -214,6 +216,14 @@ const database = {
 
 }
 
+var transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'menisked@gmail.com',
+    pass: 'PDM"jxRv4C*aAmAB'
+  }
+});
+
 //Checks if a user's login info is correct
 app.post('/login', (req, res) => {
 	const {email, password} = req.body;
@@ -234,11 +244,12 @@ app.post('/login', (req, res) => {
 app.post('/register', (req, res) => {
 	const {email, firstName, lastName, password, department, isAdmin} = req.body;
 	database.users.push({
-		id: '3',
+		id: database.users.length,
 		firstName: firstName,
 		lastName: lastName,
 		email: email,
 		colour: '#FFFF99',
+		password: password,
 		department: department,
 		isAdmin: isAdmin,
 		isActive: true,
@@ -440,6 +451,7 @@ app.post('/people', (req, res) => {
 		lastName: lastName,
 		email: email,
 		colour: '#FFFF99',
+		password: password,
 		department: department,
 		isAdmin: false,
 		isActive: true,
@@ -657,6 +669,34 @@ app.delete('/sked/assign', (req,res) => {
 	}
 	res.json('user not found');
 
+})
+
+//User forgot password
+app.post('/forgot', (req, res) => {
+	const {email} = req.body;
+	const password = generatePassword(16, false);
+
+	for (let i = 0; i < database.users.length; i++){
+		if (database.users[i].email === email){
+			database.users[i].password = password;
+		}
+	}
+
+	var mailOptions = {
+  		from: 'menisked@gmail.com',
+  		to: email,
+  		subject: 'Recover your MeniSked Password',
+ 	 	text: 'Looks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.'
+	};
+
+	transporter.sendMail(mailOptions, function(error, info){
+  		if (error) {
+    		console.log(error);
+  		} 
+  		else {
+    		console.log('Email sent: ' + info.response);
+  		}
+	});
 })
 
 app.listen(3000, () => {
