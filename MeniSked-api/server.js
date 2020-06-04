@@ -20,7 +20,7 @@ const database = {
 			lastName: 'Smith',
 			password: 'cookies',
 			email: 'john@gmail.com',
-			colour: '#ADD8E6',
+			colour: '#FFD678',
 			department: 'ST-JOES-A',
 			isAdmin: false,
 			isActive: true,
@@ -41,7 +41,7 @@ const database = {
 			lastName: 'Jenkins',
 			password: 'bananas',
 			email: 'sally@gmail.com',
-			colour: '#90EE90',
+			colour: '#F49F93',
 			department: 'ST-JOES-A',
 			isAdmin: false,
 			isActive: true,
@@ -62,7 +62,7 @@ const database = {
 			lastName: 'Menikefs',
 			password: '123',
 			email: 'pnm@gmail.com',
-			colour: '#FFC0CB',
+			colour: '#FFEE96',
 			department: 'ST-JOES-A Admin',
 			isAdmin: true,
 			isActive: true,
@@ -212,8 +212,8 @@ const database = {
 			date: "05/25/2020",
 			msg: "busy day"
 		}
-	]
-
+	],
+	colours: ['#FFEE9680','#F49F9380','#FFD67880','#EB040080','#FFE70080','#FF56C580','#FFAC3E80','#EC019180','#F8831C80','#D980FF80','#B60EFF80','#83E5C780','#7101A980','#57BB7E80','#0091FF80','#19735B80','#88E4FF80','#C7EF6580','#41A3CC80','#85C63580']
 }
 
 var transporter = nodemailer.createTransport({
@@ -243,19 +243,32 @@ app.post('/login', (req, res) => {
 //Adds a new user to the "database"
 app.post('/register', (req, res) => {
 	const {email, firstName, lastName, password, department, isAdmin} = req.body;
+	let flag = false;
+
+	for (let i = 0; i < database.users.length; i++){
+		if (database.users[i].email === email){
+			flag = true;
+		}
+	}
+
+	if (flag){
+		return res.status(400).json('user with this email already exists.');
+	}
+
 	database.users.push({
-		id: database.users.length,
+		id: database.users.length+20,
 		firstName: firstName,
 		lastName: lastName,
 		email: email,
-		colour: '#FFFF99',
+		colour: database.colours[database.users.length%20],
 		password: password,
 		department: department,
 		isAdmin: isAdmin,
 		isActive: true,
 		workSked: []
 	})
-	res.json(database.users[database.users.length -1]);
+
+	return res.json(database.users[database.users.length -1]);
 })
 
 //Adding a recurring holiday
@@ -444,13 +457,26 @@ app.get('/callTypes', (req,res) => {
 
 //Adding a user
 app.post('/people', (req, res) => {
-	const {email, firstName, lastName, password, department, msg} = req.body;
+	const {email, firstName, lastName, department} = req.body;
+	let flag = false;
+
+	for (let i = 0; i < database.users.length; i++){
+		if (database.users[i].email === email){
+			flag = true;
+		}
+	}
+	if (flag){
+		return res.status(400).json('a user with this email already exists.');
+	}
+
+	const password = generatePassword(16, false);
+
 	database.users.push({
-		id: database.users.length,
+		id: database.users.length+20,
 		firstName: firstName,
 		lastName: lastName,
 		email: email,
-		colour: '#FFFF99',
+		colour: database.colours[database.users.length%20],
 		password: password,
 		department: department,
 		isAdmin: false,
@@ -458,8 +484,20 @@ app.post('/people', (req, res) => {
 		workSked: []
 	})
 
-	//USE NODEMAILER HERE
-	res.json(database.users[database.users.length -1]);
+	var mailOptions = {
+	  	from: 'menisked@gmail.com',
+	  	to: email,
+	  	subject: 'Welcome to MeniSked!',
+	 	text: 'Hey '+firstName+',\n\nYour administrator has set up your MeniSked account and you have been given a temporary password: '+password+'. Please login using this password and immediately navigate to the account page. Here you will be able to change it to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
+	};
+
+	transporter.sendMail(mailOptions, function(error, info){
+  		if (error) {
+    		return res.json(error);
+  		} 
+  		return res.json(info.response);
+	});
+	return res.json(database.users[database.users.length -1]);
 })
 
 //Editing a user
@@ -671,32 +709,41 @@ app.delete('/sked/assign', (req,res) => {
 
 })
 
+
 //User forgot password
 app.post('/forgot', (req, res) => {
 	const {email} = req.body;
 	const password = generatePassword(16, false);
+	let name = '';
+	let flag = false;
 
 	for (let i = 0; i < database.users.length; i++){
 		if (database.users[i].email === email){
+			name = database.users[i].firstName;
+			flag = true;
 			database.users[i].password = password;
 		}
 	}
 
-	var mailOptions = {
-  		from: 'menisked@gmail.com',
-  		to: email,
-  		subject: 'Recover your MeniSked Password',
- 	 	text: 'Looks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.'
-	};
+	if (flag){
+		var mailOptions = {
+	  		from: 'menisked@gmail.com',
+	  		to: email,
+	  		subject: 'Recover your MeniSked Password.',
+	 	 	text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
+		};
 
-	transporter.sendMail(mailOptions, function(error, info){
-  		if (error) {
-    		console.log(error);
-  		} 
-  		else {
-    		console.log('Email sent: ' + info.response);
-  		}
-	});
+		transporter.sendMail(mailOptions, function(error, info){
+  			if (error) {
+    			return res.json(error);
+  			} 
+  			return res.json(info.response);
+		});
+	}
+	else{
+		return res.status(400).json('user not found');
+	}
+	
 })
 
 app.listen(3000, () => {
