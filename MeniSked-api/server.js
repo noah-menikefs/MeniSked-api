@@ -4,6 +4,8 @@ var bcrypt = require('bcryptjs');
 const cors = require('cors');
 const nodemailer = require("nodemailer");
 var generatePassword = require("password-generator");
+// const pdf = require('html-pdf');
+// const pdfTemplate = require('./documents');
 
 const app = express();
 
@@ -229,7 +231,9 @@ var transporter = nodemailer.createTransport({
 app.post('/login', (req, res) => {
 	const {email, password} = req.body;
 	let found = false;
+
 	database.users.forEach((user) => {
+		//COMPARE HASH HERE
 		if (email === user.email && password === user.password){
 			found = true;
 			return res.json(user);
@@ -256,6 +260,7 @@ app.post('/register', (req, res) => {
 		return res.status(400).json('user with this email already exists.');
 	}
 
+	//HASH PASSWORD HERE
 	database.users.push({
 		id: database.users.length+20,
 		firstName: firstName,
@@ -471,7 +476,7 @@ app.post('/people', (req, res) => {
 	}
 
 	const password = generatePassword(16, false);
-
+	//HASH PASSWORD HERE
 	database.users.push({
 		id: database.users.length+20,
 		firstName: firstName,
@@ -562,6 +567,7 @@ app.post('/account/:id', (req,res) => {
 	const {id} = req.params;
 	const {password} = req.body;
 	let found = false;
+	//HASH PASSWORD HERE
 	database.users.forEach((user, i) => {
 		if (user.id === id){
 			found = true;
@@ -578,6 +584,7 @@ app.post('/account/:id', (req,res) => {
 app.get('/account/:id', (req,res) => {
 	const {id} = req.params;
 	let found = false;
+	//HASH PASSWORD HERE
 	database.users.forEach((user) => {
 		if (user.id === id){
 			found = true;
@@ -715,6 +722,7 @@ app.delete('/sked/assign', (req,res) => {
 app.post('/forgot', (req, res) => {
 	const {email} = req.body;
 	const password = generatePassword(16, false);
+	//HASH PASSWORD
 	let name = '';
 	let flag = false;
 	for (let i = 0; i < database.users.length; i++){
@@ -757,13 +765,25 @@ app.put('/published', (req,res) => {
 	res.json(database.published);
 })
 
+//Generate PDF
+// app.post('/create-pdf', (req,res) => {
+// 	pdf.create(pdfTemplate(req.body), {}).toFile('result.pdf',(err) => {
+// 		if (err){
+// 			res.send(Promise.reject());
+// 		}
+
+// 		res.send(Promise.resolve());
+// 	});
+// });
+
+// //GET - Send PDF to client
+// app.get('/fetch-pdf', (req,res) => {
+// 	res.sendFile(`${__dirname}/result.pdf`)
+// })
+
 app.listen(3000, () => {
 	console.log('app is running on port 3000');
 })
-
-
-
-
 
 
 // //Hashing
