@@ -213,7 +213,8 @@ const database = {
 			msg: "busy day"
 		}
 	],
-	colours: ['#FFEE9680','#F49F9380','#FFD67880','#EB040080','#FFE70080','#FF56C580','#FFAC3E80','#EC019180','#F8831C80','#D980FF80','#B60EFF80','#83E5C780','#7101A980','#57BB7E80','#0091FF80','#19735B80','#88E4FF80','#C7EF6580','#41A3CC80','#85C63580']
+	colours: ['#FFEE9680','#F49F9380','#FFD67880','#EB040080','#FFE70080','#FF56C580','#FFAC3E80','#EC019180','#F8831C80','#D980FF80','#B60EFF80','#83E5C780','#7101A980','#57BB7E80','#0091FF80','#19735B80','#88E4FF80','#C7EF6580','#41A3CC80','#85C63580'],
+	published: 0 //Months after June 2020
 }
 
 var transporter = nodemailer.createTransport({
@@ -716,7 +717,6 @@ app.post('/forgot', (req, res) => {
 	const password = generatePassword(16, false);
 	let name = '';
 	let flag = false;
-
 	for (let i = 0; i < database.users.length; i++){
 		if (database.users[i].email === email){
 			name = database.users[i].firstName;
@@ -742,8 +742,19 @@ app.post('/forgot', (req, res) => {
 	}
 	else{
 		return res.status(400).json('user not found');
-	}
-	
+	}	
+})
+
+//Get published months
+app.get('/published', (req,res) => {
+	res.json(database.published);
+})
+
+//Update published months
+app.put('/published', (req,res) => {
+	const {newNum} = req.body;
+	database.published = newNum;
+	res.json(database.published);
 })
 
 app.listen(3000, () => {
