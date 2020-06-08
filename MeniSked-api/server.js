@@ -8,13 +8,19 @@ var generatePassword = require("password-generator");
 // const pdfTemplate = require('./documents');
 const knex = require('knex');
 
-knex({
+const db = knex({
 	client: 'pg',
   	connection: {
     	host : '127.0.0.1',
     	user : 'noah.menikefs',
     	password : '',
     	database : 'meniSked'
+    }
+});
+
+
+db.select('*').from('users').then(data => {
+	console.log(data);
 });
 
 const app = express();
@@ -28,15 +34,15 @@ const database = {
 	users: [
 		{
 			id: 1,
-			firstName: 'John',
-			lastName: 'Smith',
+			firstname: 'John',
+			lastname: 'Smith',
 			password: 'cookies',
 			email: 'john@gmail.com',
 			colour: '#FFD678',
 			department: 'ST-JOES-A',
-			isAdmin: false,
-			isActive: true,
-			workSked: [
+			isadmin: false,
+			isactive: true,
+			worksked: [
 				{
 					id: 0,
 					date: "05/29/2020"
@@ -49,15 +55,15 @@ const database = {
 		},
 		{
 			id: 2,
-			firstName: 'Sally',
-			lastName: 'Jenkins',
+			firstname: 'Sally',
+			lastname: 'Jenkins',
 			password: 'bananas',
 			email: 'sally@gmail.com',
 			colour: '#F49F93',
 			department: 'ST-JOES-A',
-			isAdmin: false,
-			isActive: true,
-			workSked: [
+			isadmin: false,
+			isactive: true,
+			worksked: [
 				{
 					id: 2,
 					date: "06/9/2020"
@@ -70,15 +76,15 @@ const database = {
 		},
 		{
 			id: 0,
-			firstName: 'Peter',
-			lastName: 'Menikefs',
+			firstname: 'Peter',
+			lastname: 'Menikefs',
 			password: '123',
 			email: 'pnm@gmail.com',
 			colour: '#FFEE96',
 			department: 'ST-JOES-A Admin',
-			isAdmin: true,
-			isActive: true,
-			workSked: [
+			isadmin: true,
+			isactive: true,
+			worksked: [
 				{
 					id: 2,
 					date: "07/19/2020"
@@ -101,13 +107,13 @@ const database = {
 		[
 			{
 				name: "New Year's Day",
-				isActive: true,
+				isactive: true,
 				month: "January",
 				day: 1
 			},
 			{
 				name: "Christmas Day",
-				isActive: true,
+				isactive: true,
 				month: "December",
 				day: 25
 			}
@@ -115,11 +121,11 @@ const database = {
 		[
 			{
 				name: "Party",
-				eventSked: ["12/21/2020","01/12/2021"]
+				eventsked: ["12/21/2020","01/12/2021"]
 			},
 			{
 				name: "Easter",
-				eventSked: ["04/12/2020","04/04/2021"]
+				eventsked: ["04/12/2020","04/04/2021"]
 			}
 
 		]
@@ -128,37 +134,37 @@ const database = {
 		{
 			id: 0,
 			name: "Request No Call",
-			isActive: true
+			isactive: true
 		},
 		{
 			id: 1,
 			name: "No Assignment",
-			isActive: true
+			isactive: true
 		},
 		{
 			id: 2,
 			name: "Not Available",
-			isActive: true
+			isactive: true
 		},
 		{
 			id: 3,
 			name: "Vacation",
-			isActive: true
+			isactive: true
 		},
 		{
 			id: 4,
 			name: "Staycation",
-			isActive: true
+			isactive: true
 		},
 		{
 			id: 5,
 			name: "Not Available Night",
-			isActive: true
+			isactive: true
 		},
 		{
 			id: 6,
 			name: "Assign Specific Call",
-			isActive: true
+			isactive: true
 		}
 
 
@@ -257,42 +263,59 @@ app.post('/login', (req, res) => {
 
 //Adds a new user to the "database"
 app.post('/register', (req, res) => {
-	const {email, firstName, lastName, password, department, isAdmin} = req.body;
-	let flag = false;
+	const {email, firstname, lastname, password, department, isadmin} = req.body;
+	db('users')
+		.returning('*')
+		.insert({
+			email: email,
+			firstname: firstname,
+			lastname: lastname,
+			colour: '#FFD678',
+			department: department,
+			isadmin: isadmin,
+			isactive: true,
+			worksked: []
+		})
+		.then(user => {
+			res.json(user[0]);
+		})
+		.catch(err => res.status(400).json(err));
 
-	for (let i = 0; i < database.users.length; i++){
-		if (database.users[i].email === email){
-			flag = true;
-		}
-	}
+	// let flag = false;
 
-	if (flag){
-		return res.status(400).json('user with this email already exists.');
-	}
+	// for (let i = 0; i < database.users.length; i++){
+	// 	if (database.users[i].email === email){
+	// 		flag = true;
+	// 	}
+	// }
 
-	//HASH PASSWORD HERE
-	database.users.push({
-		id: database.users.length+20,
-		firstName: firstName,
-		lastName: lastName,
-		email: email,
-		colour: database.colours[database.users.length%20],
-		password: password,
-		department: department,
-		isAdmin: isAdmin,
-		isActive: true,
-		workSked: []
-	})
+	// if (flag){
+	// 	return res.status(400).json('user with this email already exists.');
+	// }
 
-	return res.json(database.users[database.users.length -1]);
+	// //HASH PASSWORD HERE
+	// database.users.push({
+	// 	id: database.users.length+20,
+	// 	firstname: firstname,
+	// 	lastname: lastname,
+	// 	email: email,
+	// 	colour: database.colours[database.users.length%20],
+	// 	password: password,
+	// 	department: department,
+	// 	isadmin: isadmin,
+	// 	isactive: true,
+	// 	worksked: []
+	// })
+
+	//return res.json(database.users[database.users.length -1]);
 })
 
 //Adding a recurring holiday
 app.post('/holiday/r', (req,res) => {
-	const {name, month, day, isActive} = req.body;
+	const {name, month, day, isactive} = req.body;
 	database.holidays[0].push({
 		name: name,
-		isActive: isActive,
+		isactive: isactive,
 		month: month,
 		day: day
 	})
@@ -301,7 +324,7 @@ app.post('/holiday/r', (req,res) => {
 
 //Editing a recurring holiday
 app.put('/holiday/r', (req,res) => {
-	const {isActive, name, month, day} = req.body;
+	const {isactive, name, month, day} = req.body;
 	let index = -1;
 	for (let i = 0; i < database.holidays[0].length; i++){
 		if (database.holidays[0][i].name === name){
@@ -312,7 +335,7 @@ app.put('/holiday/r', (req,res) => {
 	if (index !== -1){
 		database.holidays[0][index].month = month;
 		database.holidays[0][index].day = day;
-		database.holidays[0][index].isActive = isActive;
+		database.holidays[0][index].isactive = isactive;
 		res.json(database.holidays[0][index]);
 	}
 	else{
@@ -360,7 +383,7 @@ app.post('/holiday/nr', (req,res) => {
 	const {name} = req.body;
 	database.holidays[1].push({
 		name: name,
-		eventSked: []
+		eventsked: []
 	})
 	res.json(database.holidays[1][database.holidays[1].length - 1]);
 })
@@ -376,8 +399,8 @@ app.post('/holiday/snr', (req,res) => {
 		}
 	}
 	if (index !== -1){
-		database.holidays[1][index].eventSked.push(month+'/'+day+'/'+year);
-		res.json(database.holidays[1][index].eventSked[database.holidays[1][index].eventSked.length - 1]);
+		database.holidays[1][index].eventsked.push(month+'/'+day+'/'+year);
+		res.json(database.holidays[1][index].eventsked[database.holidays[1][index].eventsked.length - 1]);
 	}
 	else{
 		res.status(404).json('no such holiday');
@@ -473,7 +496,7 @@ app.get('/callTypes', (req,res) => {
 
 //Adding a user
 app.post('/people', (req, res) => {
-	const {email, firstName, lastName, department} = req.body;
+	const {email, firstname, lastname, department} = req.body;
 	let flag = false;
 
 	for (let i = 0; i < database.users.length; i++){
@@ -489,22 +512,22 @@ app.post('/people', (req, res) => {
 	//HASH PASSWORD HERE
 	database.users.push({
 		id: database.users.length+20,
-		firstName: firstName,
-		lastName: lastName,
+		firstname: firstname,
+		lastname: lastname,
 		email: email,
 		colour: database.colours[database.users.length%20],
 		password: password,
 		department: department,
-		isAdmin: false,
-		isActive: true,
-		workSked: []
+		isadmin: false,
+		isactive: true,
+		worksked: []
 	})
 
 	var mailOptions = {
 	  	from: 'menisked@gmail.com',
 	  	to: email,
 	  	subject: 'Welcome to MeniSked!',
-	 	text: 'Hey '+firstName+',\n\nYour administrator has set up your MeniSked account and you have been given a temporary password: '+password+'. Please login using this password and immediately navigate to the account page. Here you will be able to change it to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
+	 	text: 'Hey '+firstname+',\n\nYour administrator has set up your MeniSked account and you have been given a temporary password: '+password+'. Please login using this password and immediately navigate to the account page. Here you will be able to change it to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
 	};
 
 	transporter.sendMail(mailOptions, function(error, info){
@@ -518,12 +541,12 @@ app.post('/people', (req, res) => {
 
 //Editing a user
 app.put('/people', (req, res) => {
-	const {id, isActive} = req.body;
+	const {id, isactive} = req.body;
 	let found = false;
 	database.users.forEach((user, i) => {
 		if (user.id === id){
 			found = true;
-			database.users[i].isActive = isActive;
+			database.users[i].isactive = isactive;
 			return res.json(database.users[i]);
 		}
 	})
@@ -556,13 +579,13 @@ app.get('/people', (req, res) => {
 //Editing account information
 app.put('/account/:id', (req,res) => {
 	const {id} = req.params;
-	const {firstName, lastName, email} = req.body;
+	const {firstname, lastname, email} = req.body;
 	let found = false;
 	database.users.forEach((user, i) => {
 		if (user.id === id){
 			found = true;
-			database.users[i].firstName = firstName;
-			database.users[i].lastName = lastName;
+			database.users[i].firstname = firstname;
+			database.users[i].lastname = lastname;
 			database.users[i].email = email;
 			return res.json(database.users[i]);
 		}
@@ -594,7 +617,12 @@ app.post('/account/:id', (req,res) => {
 app.get('/account/:id', (req,res) => {
 	const {id} = req.params;
 	let found = false;
-	//HASH PASSWORD HERE
+	db.select('*').from('users').where({
+		id: id
+	})
+	.then(user => {
+		console.log(user[0]);
+	})
 	database.users.forEach((user) => {
 		if (user.id === id){
 			found = true;
@@ -627,7 +655,7 @@ app.get('/sked/allNotes', (req, res) => {
 //Get active doctors
 app.get('/sked/docs', (req, res) => {
 	const arr = database.users.filter((user => {
-		return user.isActive === true;
+		return user.isactive === true;
 	}))
 	res.json(arr);
 })
@@ -643,7 +671,7 @@ app.post('/entries', (req,res) => {
 	database.entries.push({
 		id: database.entries.length + 20,
 		name: name,
-		isActive: active
+		isactive: active
 	})
 	res.json(database.entries[database.entries.length-1]);
 })
@@ -670,7 +698,7 @@ app.put('/entries', (req,res) => {
 	for (let i = 0; i < database.entries.length; i++){
 		if (database.entries[i].id === id){
 			database.entries[i].name = name;
-			database.entries[i].isActive = active;
+			database.entries[i].isactive = active;
 			return res.json(database.entries[i]);
 		}
 	}
@@ -683,18 +711,18 @@ app.post('/sked/assign', (req,res) => {
 	let index = -1;
 	for (let i = 0; i < database.users.length; i++){
 		if (database.users[i].id === docId){
-			for (let j = 0; j < database.users[i].workSked.length; j++){
-				if (database.users[i].workSked[j].date === date){
+			for (let j = 0; j < database.users[i].worksked.length; j++){
+				if (database.users[i].worksked[j].date === date){
 					index = j;
 					break;
 
 				}
 			}
 			if (index !== -1){
-				database.users[i].workSked.splice(index, 1);
+				database.users[i].worksked.splice(index, 1);
 			}
 
-			database.users[i].workSked.push({
+			database.users[i].worksked.push({
 				id: typeId,
 				date: date
 			})
@@ -710,15 +738,15 @@ app.delete('/sked/assign', (req,res) => {
 	let index = -1;
 	for (let i = 0; i < database.users.length; i++){
 		if (database.users[i].id === docId){
-			for (let j = 0; j < database.users[i].workSked.length; j++){
-				if (database.users[i].workSked[j].date === date){
+			for (let j = 0; j < database.users[i].worksked.length; j++){
+				if (database.users[i].worksked[j].date === date){
 					index = j;
 					break;
 
 				}
 			}
 			if (index !== -1){
-				database.users[i].workSked.splice(index, 1);
+				database.users[i].worksked.splice(index, 1);
 			}
 			return res.json(database.users[i]);
 		}
@@ -737,7 +765,7 @@ app.post('/forgot', (req, res) => {
 	let flag = false;
 	for (let i = 0; i < database.users.length; i++){
 		if (database.users[i].email === email){
-			name = database.users[i].firstName;
+			name = database.users[i].firstname;
 			flag = true;
 			database.users[i].password = password;
 		}
@@ -820,7 +848,6 @@ app.listen(3000, () => {
 / --> res = this is working
 /login --> POST = success/fail (always want to send passwords as POST)
 /register --> POST = user 
-/profile/:userId --> GET = user
 /sked --> PUT/POST/GET/DELETE --> skedEvents 
 /holiday --> GET/POST/PUT/DELETE --> holidays
 /callTypes --> GET/POST/PUT/DELETE --> calls
