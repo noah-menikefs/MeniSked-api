@@ -17,8 +17,10 @@
     "express": "^4.17.1",
     "file-saver": "^2.0.2",
     "html-pdf": "^2.2.0",
+    "knex": "^0.21.1",
     "nodemailer": "^6.4.8",
-    "password-generator": "^2.3.2"
+    "password-generator": "^2.3.2",
+    "pg": "^8.2.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"

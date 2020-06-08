@@ -6,6 +6,16 @@ const nodemailer = require("nodemailer");
 var generatePassword = require("password-generator");
 // const pdf = require('html-pdf');
 // const pdfTemplate = require('./documents');
+const knex = require('knex');
+
+knex({
+	client: 'pg',
+  	connection: {
+    	host : '127.0.0.1',
+    	user : 'noah.menikefs',
+    	password : '',
+    	database : 'meniSked'
+});
 
 const app = express();
 
