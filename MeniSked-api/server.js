@@ -246,41 +246,88 @@ var transporter = nodemailer.createTransport({
 //Checks if a user's login info is correct
 app.post('/login', (req, res) => {
 	const {email, password} = req.body;
-	let found = false;
+	db.select('email', 'hash').from('login')
+		.where('email', '=', email)
+		.then(data => {
+			const isValid = bcrypt.compareSync(password, data[0].hash); // true
+			
+			if (isValid){
+				return db.select('*').from('users')
+					.where('email','=',email)
+					.then(user => {
+						res.json(user[0])
+					})
+					.catch(err => res.status(400).json('unable to get user'))
+			}
+			else{
+				res.status(400).json('wrong credentials')
+			}
+		})
+	.catch(err => res.status(400).json('wrong credentials'))
 
-	database.users.forEach((user) => {
-		//COMPARE HASH HERE
-		if (email === user.email && password === user.password){
-			found = true;
-			return res.json(user);
+	// let found = false;
 
-		}
-	})
-	if (!found){
-		res.status(400).json('error logging in');
-	}
+	// database.users.forEach((user) => {
+	// 	//COMPARE HASH HERE
+	// 	if (email === user.email && password === user.password){
+	// 		found = true;
+	// 		return res.json(user);
+
+	// 	}
+	// })
+	// if (!found){
+	// 	res.status(400).json('error logging in');
+	// }
 })
+
 
 //Adds a new user to the "database"
 app.post('/register', (req, res) => {
 	const {email, firstname, lastname, password, department, isadmin} = req.body;
-	db('users')
-		.returning('*')
-		.insert({
-			email: email,
-			firstname: firstname,
-			lastname: lastname,
-			colour: '#FFD678',
-			department: department,
-			isadmin: isadmin,
-			isactive: true,
-			worksked: []
-		})
-		.then(user => {
-			res.json(user[0]);
-		})
-		.catch(err => res.status(400).json(err));
+	const salt = bcrypt.genSaltSync(10);
+	const hash = bcrypt.hashSync(password, salt);
+	let colour = '';
+	let colours = '';
 
+	db.select('colours').from('other').then(clrs => {
+		colours = clrs[0].colours;
+		db('users').count('id').then(ctr => {
+			colour = colours[ctr[0].count];
+			console.log(colour);
+			db.transaction(trx => {
+				trx.insert({
+					hash: hash,
+					email: email
+				})
+				.into('login')
+				.returning('email')
+				.then(loginemail => {
+					return trx('users')
+						.returning('*')
+						.insert({
+							email: loginemail[0],
+							firstname: firstname,
+							lastname: lastname,
+							colour: colour,
+							department: department,
+							isadmin: isadmin,
+							isactive: true,
+							worksked: []
+						})
+						.then(user => {
+							res.json(user[0]);
+						})
+					})
+				.then(trx.commit)
+				.catch(trx.rollback)
+			})
+			.catch(err => res.status(400).json('error while registering'));
+		});
+	});
+
+		
+
+	
 	// let flag = false;
 
 	// for (let i = 0; i < database.users.length; i++){
@@ -313,44 +360,63 @@ app.post('/register', (req, res) => {
 //Adding a recurring holiday
 app.post('/holiday/r', (req,res) => {
 	const {name, month, day, isactive} = req.body;
-	database.holidays[0].push({
-		name: name,
-		isactive: isactive,
-		month: month,
-		day: day
-	})
-	res.json(database.holidays[0][database.holidays[0].length -1]);
+	db('rholidays')
+		.returning('*')
+		.insert({
+			name: name,
+			isactive: isactive,
+			month: month,
+			day: day
+		})
+		.then(holiday => {
+			res.json(holiday[0]);
+		})
+		.catch(err => res.status(404).json('could not add holiday'))
 })
 
 //Editing a recurring holiday
 app.put('/holiday/r', (req,res) => {
+
 	const {isactive, name, month, day} = req.body;
-	let index = -1;
-	for (let i = 0; i < database.holidays[0].length; i++){
-		if (database.holidays[0][i].name === name){
-			index = i;
-			break;
-		}
-	}
-	if (index !== -1){
-		database.holidays[0][index].month = month;
-		database.holidays[0][index].day = day;
-		database.holidays[0][index].isactive = isactive;
-		res.json(database.holidays[0][index]);
-	}
-	else{
-		res.status(404).json('no such holiday');
-	}
+	db('rholidays')
+		.where('name','=', name)
+		.update({
+			isactive: isactive,
+			month: month,
+			day: day
+		})
+		.returning('*')
+		.then(all => {
+			res.json(all[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+	// let index = -1;
+	// for (let i = 0; i < database.holidays[0].length; i++){
+	// 	if (database.holidays[0][i].name === name){
+	// 		index = i;
+	// 		break;
+	// 	}
+	// }
+	// if (index !== -1){
+	// 	database.holidays[0][index].month = month;
+	// 	database.holidays[0][index].day = day;
+	// 	database.holidays[0][index].isactive = isactive;
+	// 	res.json(database.holidays[0][index]);
+	// }
+	// else{
+	// 	res.status(404).json('no such holiday');
+	// }
 })
 
 //Getting holidays
 app.get('/holiday/:type', (req,res) => {
 	const {type} = req.params;
-	let j = 1;
-	if (type === 'r'){
-		j = 0;
-	}
-	res.json(database.holidays[j]);
+	db.select('*')
+		.from(type+'holidays')
+		.then(holidays => {
+			res.json(holidays);
+		})
+		.catch(err => res.status(400).json('unable to get holiday'))
 })
 
 
@@ -358,53 +424,74 @@ app.get('/holiday/:type', (req,res) => {
 app.delete('/holiday/:type', (req,res) => {
 	const {type} = req.params;
 	const {name} = req.body;
-	let j = 1;
-	if (type === 'r'){
-		j = 0;
-	}
-	let index = -1;
-	for (let i = 0; i < database.holidays[j].length; i++){
-		if (database.holidays[j][i].name === name){
-			index = i;
-			break;
-		}
-	}
-	if (index !== -1){
-		database.holidays[j].splice(index,1);
-		res.json(database.holidays[j]);
-	}
-	else{
-		res.status(404).json('no such holiday');
-	}
+	
+	db(type+'holidays')
+		.where('name', '=', name)
+		.del()
+	// for (let i = 0; i < database.holidays[j].length; i++){
+	// 	if (database.holidays[j][i].name === name){
+	// 		index = i;
+	// 		break;
+	// 	}
+	// }
+	// if (index !== -1){
+	// 	database.holidays[j].splice(index,1);
+	// 	res.json(database.holidays[j]);
+	// }
+	// else{
+	// 	res.status(404).json('no such holiday');
+	// }
 })
 
 //Adding a non-recurring holiday
 app.post('/holiday/nr', (req,res) => {
 	const {name} = req.body;
-	database.holidays[1].push({
-		name: name,
-		eventsked: []
-	})
-	res.json(database.holidays[1][database.holidays[1].length - 1]);
+	db('nrholidays')
+		.returning('*')
+		.insert({
+			name: name,
+			eventsked: []
+		})
+		.then(holiday => {
+			res.json(holiday[0]);
+		})
+		.catch(err => res.status(404).json('could not add holiday'))
+	// database.holidays[1].push({
+	// 	name: name,
+	// 	eventsked: []
+	// })
+	// res.json(database.holidays[1][database.holidays[1].length - 1]);
 })
 
 //Scheduling a non-recurring holiday
-app.post('/holiday/snr', (req,res) => {
+app.put('/holiday/snr', (req,res) => {
 	const {name, year, month, day} = req.body;
-	let index = -1;
-	for (let i = 0; i < database.holidays[1].length; i++){
-		if (database.holidays[1][i].name === name){
-			index = i;
-			break;
-		}
-	}
-	if (index !== -1){
-		database.holidays[1][index].eventsked.push(month+'/'+day+'/'+year);
-		res.json(database.holidays[1][index].eventsked[database.holidays[1][index].eventsked.length - 1]);
-	}
-	else{
-		res.status(404).json('no such holiday');
-	}
+	db('nrholidays')
+		.where('name','=', name)
+		.update({
+			eventsked: knex.raw('array_append(eventsked, ?)', [month+'/'+day+'/'+year])
+		})
+		.returning('*')
+		.then(all => {
+			res.json(all[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+
+	
+	// let index = -1;
+	// for (let i = 0; i < database.holidays[1].length; i++){
+	// 	if (database.holidays[1][i].name === name){
+	// 		index = i;
+	// 		break;
+	// 	}
+	// }
+	// if (index !== -1){
+	// 	database.holidays[1][index].eventsked.push(month+'/'+day+'/'+year);
+	// 	res.json(database.holidays[1][index].eventsked[database.holidays[1][index].eventsked.length - 1]);
+	// }
+	// else{
+	// 	res.status(404).json('no such holiday');
+	// }
 })
 
 //Adding a call type
@@ -616,22 +703,26 @@ app.post('/account/:id', (req,res) => {
 //Getting user's account information
 app.get('/account/:id', (req,res) => {
 	const {id} = req.params;
-	let found = false;
-	db.select('*').from('users').where({
-		id: id
-	})
-	.then(user => {
-		console.log(user[0]);
-	})
-	database.users.forEach((user) => {
-		if (user.id === id){
-			found = true;
-			return res.json(user);
-		}
-	})
-	if (!found){
-		res.status(404).json('no such user');
-	}
+	// let found = false;
+	db.select('*').from('users').where({id})
+		.then(user => {
+			if (user.length){
+				res.json(user[0]);
+			}
+			else{
+				res.status(400).json('Not found')
+			}
+		})
+		.catch(err => res.status(400).json('error getting user'))
+	// database.users.forEach((user) => {
+	// 	if (user.id === id){
+	// 		found = true;
+	// 		return res.json(user);
+	// 	}
+	// })
+	// if (!found){
+	// 	res.status(404).json('no such user');
+	// }
 })
 
 //Add note
@@ -799,10 +890,19 @@ app.get('/published', (req,res) => {
 //Update published months
 app.put('/published', (req,res) => {
 	const {newNum} = req.body;
-	database.published = newNum;
-	res.json(database.published);
+	db('other').update('published', newNum)
+	.returning('published')
+	.then(published => {
+		res.json(published[0]);
+	})
+	.catch(err => res.status(400).json('unable to get published'))
+	// database.published = newNum;
+	// res.json(database.published);
 })
 
+
+
+	
 //Generate PDF
 // app.post('/create-pdf', (req,res) => {
 // 	pdf.create(pdfTemplate(req.body), {}).toFile('result.pdf',(err) => {
@@ -823,23 +923,6 @@ app.listen(3000, () => {
 	console.log('app is running on port 3000');
 })
 
-
-// //Hashing
-// 	var bcrypt = require('bcryptjs');
-// 	bcrypt.genSalt(10, function(err, salt) {
-//    		bcrypt.hash(password, salt, function(err, hash) {
-//         	console.log(hash);
-//     	});
-// 	});
-
-// //Checking
-	// // Load hash from your password DB.
-	// bcrypt.compare("apples", "$2a$10$enNbkbWo29q4xjl8tylxtum/8p31ZbUODeQ.ENORdhz8TWkKtawia", function(err, res) {
- //    	console.log('first guess', res);
-	// });
-	// bcrypt.compare("not_bacon", "$2a$10$enNbkbWo29q4xjl8tylxtum/8p31ZbUODeQ.ENORdhz8TWkKtawia", function(err, res) {
- //    	console.log('second guess', res);
-	// });
 
 
 
