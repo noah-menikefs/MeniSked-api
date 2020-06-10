@@ -497,118 +497,140 @@ app.put('/holiday/snr', (req,res) => {
 //Adding a call type
 app.post('/callTypes', (req,res) => {
 	const {name, priority, active} = req.body;
-	if (priority !== (database.callTypes.length + 1)){
-		database.callTypes.forEach((call,n) => {
-			if (priority <= database.callTypes[n].priority){
-				return database.callTypes[n].priority = database.callTypes[n].priority + 1;
-			}
+	db('entries')
+		.returning('*')
+		.insert({
+			name: name,
+			isactive: active,
+			priority: priority,
+			type: 1
 		})
-	}
-	database.callTypes.push({
-		id: (database.callTypes.length+20),
-		name: name,
-		priority: priority,
-		active: active
-	})
-	res.json(database.callTypes[database.callTypes.length - 1]);
+		.then(entry => {
+			res.json(entry[0]);
+		})
+		.catch(err => res.status(404).json('could not add entry'))
+
+	//MOVE AROUND PRIORITIES
+
+
+	// if (priority !== (database.callTypes.length + 1)){
+	// 	database.callTypes.forEach((call,n) => {
+	// 		if (priority <= database.callTypes[n].priority){
+	// 			return database.callTypes[n].priority = database.callTypes[n].priority + 1;
+	// 		}
+	// 	})
+	// }
+	// database.callTypes.push({
+	// 	id: (database.callTypes.length+20),
+	// 	name: name,
+	// 	priority: priority,
+	// 	active: active
+	// })
+	// res.json(database.callTypes[database.callTypes.length - 1]);
 })
 
 //Editing a call type
 app.put('/callTypes', (req, res) => {
 	const {id, name, priority, active} = req.body;
-	let index = -1;
-	for (let i = 0; i < database.callTypes.length; i++){
-		if (database.callTypes[i].id === id){
-			index = i;
-		}
-	}
-	if (index !== -1){
-		const p = database.callTypes[index].priority
-		if (p !== priority){
-			if (p > priority){
-				database.callTypes.forEach((call,n) => {
-					if (priority <= database.callTypes[n].priority && database.callTypes[n].priority < p){
-						return database.callTypes[n].priority = database.callTypes[n].priority + 1;
-					}
-				})
-			}
-			else{
-				database.callTypes.forEach((call,n) => {
-					if (priority >= database.callTypes[n].priority && database.callTypes[n].priority > p){
-						return database.callTypes[n].priority = database.callTypes[n].priority - 1;
-					}
-				})
-			}
-		}
-		database.callTypes[index].name = name;
-		database.callTypes[index].priority = priority;
-		database.callTypes[index].active = active;
-		res.json(database.callTypes[index]);
-	}
-	else{
-		res.status(404).json('no such holiday');
-	}
+	db('entries')
+		.where('id','=', id)
+		.update({
+			name: name,
+			priority: priority,
+			isactive: active
+		})
+		.returning('*')
+		.then(call => {
+			res.json(call[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+	
+	//MOVE AROUND PRIORITIES
+
+
+	// let index = -1;
+	// for (let i = 0; i < database.callTypes.length; i++){
+	// 	if (database.callTypes[i].id === id){
+	// 		index = i;
+	// 	}
+	// }
+	// if (index !== -1){
+	// 	const p = database.callTypes[index].priority
+	// 	if (p !== priority){
+	// 		if (p > priority){
+	// 			database.callTypes.forEach((call,n) => {
+	// 				if (priority <= database.callTypes[n].priority && database.callTypes[n].priority < p){
+	// 					return database.callTypes[n].priority = database.callTypes[n].priority + 1;
+	// 				}
+	// 			})
+	// 		}
+	// 		else{
+	// 			database.callTypes.forEach((call,n) => {
+	// 				if (priority >= database.callTypes[n].priority && database.callTypes[n].priority > p){
+	// 					return database.callTypes[n].priority = database.callTypes[n].priority - 1;
+	// 				}
+	// 			})
+	// 		}
+	// 	}
+	// 	database.callTypes[index].name = name;
+	// 	database.callTypes[index].priority = priority;
+	// 	database.callTypes[index].active = active;
+	// 	res.json(database.callTypes[index]);
+	// }
+	// else{
+	// 	res.status(404).json('no such holiday');
+	// }
 })
 
 //Deleting a call type
 app.delete('/callTypes', (req,res) => {
 	const {id} = req.body;
-	let index = -1;
-	let priority = -1;
-	for (let i = 0; i < database.callTypes.length; i++){
-		if (database.callTypes[i].id === id){
-			index = i;
-			priority = database.callTypes[i].priority;
-			break;
-		}
-	}
-	if (index !== -1){
-		database.callTypes.splice(index,1);
-		for (let n = 0; n < database.callTypes.length; n++){
-			if (database.callTypes[n].priority > priority){
-				database.callTypes[n].priority = database.callTypes[n].priority - 1;
-			}
-		}
-		res.json(database.callTypes);
-	}
-	else{
-		res.status(404).json('no such holiday');
-	}
+	db('entries')
+		.where('id', '=', id)
+		.del();
+
+	// let index = -1;
+	// let priority = -1;
+	// for (let i = 0; i < database.callTypes.length; i++){
+	// 	if (database.callTypes[i].id === id){
+	// 		index = i;
+	// 		priority = database.callTypes[i].priority;
+	// 		break;
+	// 	}
+	// }
+	// if (index !== -1){
+	// 	database.callTypes.splice(index,1);
+	// 	for (let n = 0; n < database.callTypes.length; n++){
+	// 		if (database.callTypes[n].priority > priority){
+	// 			database.callTypes[n].priority = database.callTypes[n].priority - 1;
+	// 		}
+	// 	}
+	// 	res.json(database.callTypes);
+	// }
+	// else{
+	// 	res.status(404).json('no such holiday');
+	// }
 })
 
 //Getting call types
 app.get('/callTypes', (req,res) => {
-	res.json(database.callTypes);
+	db.select('*')
+		.from('entries')
+		.then(entries => {
+			res.json(entries);
+		})
+		.catch(err => res.status(400).json('unable to get holiday'))
 })
 
 //Adding a user
 app.post('/people', (req, res) => {
 	const {email, firstname, lastname, department} = req.body;
-	let flag = false;
-
-	for (let i = 0; i < database.users.length; i++){
-		if (database.users[i].email === email){
-			flag = true;
-		}
-	}
-	if (flag){
-		return res.status(400).json('a user with this email already exists.');
-	}
 
 	const password = generatePassword(16, false);
-	//HASH PASSWORD HERE
-	database.users.push({
-		id: database.users.length+20,
-		firstname: firstname,
-		lastname: lastname,
-		email: email,
-		colour: database.colours[database.users.length%20],
-		password: password,
-		department: department,
-		isadmin: false,
-		isactive: true,
-		worksked: []
-	})
+	const salt = bcrypt.genSaltSync(10);
+	const hash = bcrypt.hashSync(password, salt);
+	let colour = '';
+	let colours = '';
 
 	var mailOptions = {
 	  	from: 'menisked@gmail.com',
@@ -617,45 +639,107 @@ app.post('/people', (req, res) => {
 	 	text: 'Hey '+firstname+',\n\nYour administrator has set up your MeniSked account and you have been given a temporary password: '+password+'. Please login using this password and immediately navigate to the account page. Here you will be able to change it to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
 	};
 
-	transporter.sendMail(mailOptions, function(error, info){
-  		if (error) {
-    		return res.json(error);
-  		} 
-  		return res.json(info.response);
+	db.select('colours').from('other').then(clrs => {
+		colours = clrs[0].colours;
+		db('users').count('id').then(ctr => {
+			colour = colours[ctr[0].count];
+			console.log(colour);
+			db.transaction(trx => {
+				trx.insert({
+					hash: hash,
+					email: email
+				})
+				.into('login')
+				.returning('email')
+				.then(loginemail => {
+					return trx('users')
+						.returning('*')
+						.insert({
+							email: loginemail[0],
+							firstname: firstname,
+							lastname: lastname,
+							colour: colour,
+							department: department,
+							isadmin: false,
+							isactive: true,
+							worksked: []
+						})
+						.then(user => {
+							transporter.sendMail(mailOptions, function(error, info){
+  								if (error) {
+    								res.json(error);
+  								}
+							})
+							res.json(user[0]);
+						})
+					.then(trx.commit)
+					.catch(trx.rollback)
+				})
+			.catch(err => res.status(400).json('error while registering'));
+			});
+		});
 	});
-	return res.json(database.users[database.users.length -1]);
+
+	// database.users.push({
+	// 	id: database.users.length+20,
+	// 	firstname: firstname,
+	// 	lastname: lastname,
+	// 	email: email,
+	// 	colour: database.colours[database.users.length%20],
+	// 	password: password,
+	// 	department: department,
+	// 	isadmin: false,
+	// 	isactive: true,
+	// 	worksked: []
+	// })
 })
 
 //Editing a user
 app.put('/people', (req, res) => {
 	const {id, isactive} = req.body;
-	let found = false;
-	database.users.forEach((user, i) => {
-		if (user.id === id){
-			found = true;
-			database.users[i].isactive = isactive;
-			return res.json(database.users[i]);
-		}
-	})
-	if (!found){
-		res.status(404).json('no such user');
-	}
+	db('users')
+		.where('id','=', id)
+		.update({
+			isactive: isactive
+		})
+		.returning('*')
+		.then(user => {
+			res.json(user[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+	// let found = false;
+	// database.users.forEach((user, i) => {
+	// 	if (user.id === id){
+	// 		found = true;
+	// 		database.users[i].isactive = isactive;
+	// 		return res.json(database.users[i]);
+	// 	}
+	// })
+	// if (!found){
+	// 	res.status(404).json('no such user');
+	// }
 })
 
 //Deleting a user
 app.delete('/people', (req,res) => {
-	const {id} = req.body;
-	let found = false;
-	database.users.forEach((user, i) => {
-		if (user.id === id){
-			found = true;
-			database.users.splice(i, 1);
-			return res.json(database.users);
-		}
-	})
-	if (!found){
-		res.status(404).json('no such user');
-	}
+	const {id, loginid} = req.body;
+	db('users')
+		.where('id', '=', id)
+		.del();
+	db('login')
+		.where('id', '=', loginid)
+		.del(); 
+	// let found = false;
+	// database.users.forEach((user, i) => {
+	// 	if (user.id === id){
+	// 		found = true;
+	// 		database.users.splice(i, 1);
+	// 		return res.json(database.users);
+	// 	}
+	// })
+	// if (!found){
+	// 	res.status(404).json('no such user');
+	// }
 })
 
 //Getting all users
