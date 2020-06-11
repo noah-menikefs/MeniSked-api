@@ -264,20 +264,6 @@ app.post('/login', (req, res) => {
 			}
 		})
 	.catch(err => res.status(400).json('wrong credentials'))
-
-	// let found = false;
-
-	// database.users.forEach((user) => {
-	// 	//COMPARE HASH HERE
-	// 	if (email === user.email && password === user.password){
-	// 		found = true;
-	// 		return res.json(user);
-
-	// 	}
-	// })
-	// if (!found){
-	// 	res.status(400).json('error logging in');
-	// }
 })
 
 
@@ -323,37 +309,6 @@ app.post('/register', (req, res) => {
 			.catch(err => res.status(400).json('error while registering'));
 		});
 	});
-
-		
-
-	
-	// let flag = false;
-
-	// for (let i = 0; i < database.users.length; i++){
-	// 	if (database.users[i].email === email){
-	// 		flag = true;
-	// 	}
-	// }
-
-	// if (flag){
-	// 	return res.status(400).json('user with this email already exists.');
-	// }
-
-	// //HASH PASSWORD HERE
-	// database.users.push({
-	// 	id: database.users.length+20,
-	// 	firstname: firstname,
-	// 	lastname: lastname,
-	// 	email: email,
-	// 	colour: database.colours[database.users.length%20],
-	// 	password: password,
-	// 	department: department,
-	// 	isadmin: isadmin,
-	// 	isactive: true,
-	// 	worksked: []
-	// })
-
-	//return res.json(database.users[database.users.length -1]);
 })
 
 //Adding a recurring holiday
@@ -375,7 +330,6 @@ app.post('/holiday/r', (req,res) => {
 
 //Editing a recurring holiday
 app.put('/holiday/r', (req,res) => {
-
 	const {isactive, name, month, day} = req.body;
 	db('rholidays')
 		.where('name','=', name)
@@ -389,22 +343,6 @@ app.put('/holiday/r', (req,res) => {
 			res.json(all[0]);
 		})
 		.catch(err => res.status(400).json('unable to edit'))
-	// let index = -1;
-	// for (let i = 0; i < database.holidays[0].length; i++){
-	// 	if (database.holidays[0][i].name === name){
-	// 		index = i;
-	// 		break;
-	// 	}
-	// }
-	// if (index !== -1){
-	// 	database.holidays[0][index].month = month;
-	// 	database.holidays[0][index].day = day;
-	// 	database.holidays[0][index].isactive = isactive;
-	// 	res.json(database.holidays[0][index]);
-	// }
-	// else{
-	// 	res.status(404).json('no such holiday');
-	// }
 })
 
 //Getting holidays
@@ -431,19 +369,6 @@ app.delete('/holiday/:type', (req,res) => {
 		.then(holiday => {
 			res.json(holiday[0]);
 		})
-	// for (let i = 0; i < database.holidays[j].length; i++){
-	// 	if (database.holidays[j][i].name === name){
-	// 		index = i;
-	// 		break;
-	// 	}
-	// }
-	// if (index !== -1){
-	// 	database.holidays[j].splice(index,1);
-	// 	res.json(database.holidays[j]);
-	// }
-	// else{
-	// 	res.status(404).json('no such holiday');
-	// }
 })
 
 //Adding a non-recurring holiday
@@ -459,11 +384,6 @@ app.post('/holiday/nr', (req,res) => {
 			res.json(holiday[0]);
 		})
 		.catch(err => res.status(404).json('could not add holiday'))
-	// database.holidays[1].push({
-	// 	name: name,
-	// 	eventsked: []
-	// })
-	// res.json(database.holidays[1][database.holidays[1].length - 1]);
 })
 
 //Scheduling a non-recurring holiday
@@ -479,27 +399,20 @@ app.put('/holiday/snr', (req,res) => {
 			res.json(all[0]);
 		})
 		.catch(err => res.status(400).json('unable to edit'))
-
-	
-	// let index = -1;
-	// for (let i = 0; i < database.holidays[1].length; i++){
-	// 	if (database.holidays[1][i].name === name){
-	// 		index = i;
-	// 		break;
-	// 	}
-	// }
-	// if (index !== -1){
-	// 	database.holidays[1][index].eventsked.push(month+'/'+day+'/'+year);
-	// 	res.json(database.holidays[1][index].eventsked[database.holidays[1][index].eventsked.length - 1]);
-	// }
-	// else{
-	// 	res.status(404).json('no such holiday');
-	// }
 })
 
 //Adding a call type
 app.post('/callTypes', (req,res) => {
 	const {name, priority, active} = req.body;
+	db('entries')
+		.where('priority','>=', priority)
+		.increment('priority', 1)
+		.returning('*')
+		.then(all => {
+			// res.json(all);
+		})
+		.catch(err => res.status(400).json('unable to increment'))
+
 	db('entries')
 		.returning('*')
 		.insert({
@@ -512,41 +425,59 @@ app.post('/callTypes', (req,res) => {
 			res.json(entry[0]);
 		})
 		.catch(err => res.status(404).json('could not add entry'))
-
-	//MOVE AROUND PRIORITIES
-
-
-	// if (priority !== (database.callTypes.length + 1)){
-	// 	database.callTypes.forEach((call,n) => {
-	// 		if (priority <= database.callTypes[n].priority){
-	// 			return database.callTypes[n].priority = database.callTypes[n].priority + 1;
-	// 		}
-	// 	})
-	// }
-	// database.callTypes.push({
-	// 	id: (database.callTypes.length+20),
-	// 	name: name,
-	// 	priority: priority,
-	// 	active: active
-	// })
-	// res.json(database.callTypes[database.callTypes.length - 1]);
 })
 
 //Editing a call type
 app.put('/callTypes', (req, res) => {
 	const {id, name, priority, active} = req.body;
-	db('entries')
-		.where('id','=', id)
-		.update({
-			name: name,
-			priority: priority,
-			isactive: active
-		})
-		.returning('*')
-		.then(call => {
-			res.json(call[0]);
-		})
-		.catch(err => res.status(400).json('unable to edit'))
+	
+	let oldP = -1;
+
+	db.select('priority')
+		.from('entries')
+		.where('id', '=', id)
+		.then(pri => {
+			oldP = pri[0].priority;
+			if (oldP !== priority){
+				if (oldP > priority){
+					db('entries')
+						.where('priority','>=', priority)
+						.andWhere('priority', '<', oldP)
+						.increment('priority', 1)
+						.returning('*')
+						.then(all => {
+							// res.json(all);
+						})
+						.catch(err => res.status(400).json('unable to increment'))
+				}
+				else{
+					db('entries')
+						.where('priority','<=', priority)
+						.andWhere('priority', '>', oldP)
+						.decrement('priority', 1)
+						.returning('*')
+						.then(all => {
+							// res.json(all);
+						})
+						.catch(err => res.status(400).json('unable to increment'))
+				}
+				db('entries')
+					.where('id','=', id)
+					.update({
+						name: name,
+						priority: priority,
+						isactive: active
+					})
+					.returning('*')
+					.then(call => {
+						res.json(call[0]);
+					})
+					.catch(err => res.status(400).json('unable to edit'))
+			}
+		})				
+		.catch(err => res.status(404).json('could not access entry'))
+
+	
 	
 	//MOVE AROUND PRIORITIES
 
@@ -736,6 +667,7 @@ app.delete('/people', (req,res) => {
 		.then(user => {
 			res.json(user[0]);
 		})
+		.catch(err => res.status(400).json('unable to delete'))
 	db('login')
 		.returning('*')
 		.where('email', email)
@@ -743,6 +675,7 @@ app.delete('/people', (req,res) => {
 		.then(user => {
 			res.json(user[0]);
 		})
+		.catch(err => res.status(400).json('unable to delete'))
 
 	// let found = false;
 	// database.users.forEach((user, i) => {
@@ -821,18 +754,39 @@ app.put('/account/:id', (req,res) => {
 app.post('/account/:id', (req,res) => {
 	const {id} = req.params;
 	const {password} = req.body;
-	let found = false;
-	//HASH PASSWORD HERE
-	database.users.forEach((user, i) => {
-		if (user.id === id){
-			found = true;
-			database.users[i].password = password;
-			return res.json(database.users[i]);
-		}
-	})
-	if (!found){
-		res.status(404).json('no such user');
-	}
+	
+	const salt = bcrypt.genSaltSync(10);
+	const hash = bcrypt.hashSync(password, salt);
+
+	db.select('email')
+		.from('users')
+		.where('id', '=', id)
+		.then(mail => {
+			const eml = mail[0].email;
+			db('login')
+				.where('email', eml)
+				.update('hash', hash)
+				.returning('id', 'email')
+				.then(person => {
+					res.json(person[0]);
+				})
+				.catch(err => res.status(400).json('unable to edit'))
+			})
+		.catch(err => res.status(400).json('unable to access user'))
+
+
+	// let found = false;
+	// //HASH PASSWORD HERE
+	// database.users.forEach((user, i) => {
+	// 	if (user.id === id){
+	// 		found = true;
+	// 		database.users[i].password = password;
+	// 		return res.json(database.users[i]);
+	// 	}
+	// })
+	// if (!found){
+	// 	res.status(404).json('no such user');
+	// }
 })
 
 //Getting user's account information
@@ -863,121 +817,253 @@ app.get('/account/:id', (req,res) => {
 //Add note
 app.post('/sked/notes', (req, res) => {
 	const {date, msg, type} = req.body;
-	database.notes.push({
-		id: (database.notes.length + 20),
-		type: type,
-		date: date,
-		msg: msg
-	})
-	res.json(database.notes[database.notes.length -1]);
+
+	db('notes')
+		.returning('*')
+		.insert({
+			type: type,
+			date: date,
+			msg: msg,
+		})
+		.then(note => {
+			res.json(note[0]);
+		})
+		.catch(err => res.status(404).json('could not add note'))
+
+	// database.notes.push({
+	// 	id: (database.notes.length + 20),
+	// 	type: type,
+	// 	date: date,
+	// 	msg: msg
+	// })
+	// res.json(database.notes[database.notes.length -1]);
 })
 
 //Getting all notes 
 app.get('/sked/allNotes', (req, res) => {
-	res.json(database.notes);
+	db.select('*')
+		.from('notes')
+		.then(notes => {
+			res.json(notes);
+		})
+		.catch(err => res.status(400).json('unable to get notes'))
+
+	// res.json(database.notes);
 })
 
 
 //Get active doctors
 app.get('/sked/docs', (req, res) => {
-	const arr = database.users.filter((user => {
-		return user.isactive === true;
-	}))
-	res.json(arr);
+	db.select('*')
+		.from('users')
+		.then(users => {
+			const arr = users.filter((user => {
+				return user.isactive === true;
+			}))
+			res.json(arr);
+		})
+		.catch(err => res.status(400).json('unable to get docs'))
 })
 
 //Get entry types
 app.get('/sked/entries', (req,res) => {
-	res.json(database.entries);
+	db.select('*')
+		.from('entries')
+		.then(entries => {
+			res.json(entries);
+		})
+		.catch(err => res.status(400).json('unable to get entries'))
+
+	// res.json(database.entries);
 })
 
 //Add entry type
 app.post('/entries', (req,res) => {
 	const {name, active} = req.body;
-	database.entries.push({
-		id: database.entries.length + 20,
-		name: name,
-		isactive: active
-	})
-	res.json(database.entries[database.entries.length-1]);
+
+	db('entries')
+		.returning('*')
+		.insert({
+			name: name,
+			isactive: active,
+			priority: -1,
+			type: 0
+		})
+		.then(entry => {
+			res.json(entry[0]);
+		})
+		.catch(err => res.status(404).json('could not add entry'))
+
+	// database.entries.push({
+	// 	id: database.entries.length + 20,
+	// 	name: name,
+	// 	isactive: active
+	// })
+	// res.json(database.entries[database.entries.length-1]);
 })
 
 //Delete entry type
 app.delete('/entries', (req, res) => {
 	const {id} = req.body;
-	let index = -1;
-	for (let i = 0; i < database.entries.length; i++){
-		if (database.entries[i].id === id){
-			index = i;
-		}
-	}
-	if (index !== -1){
-		database.entries.splice(index,1);
-		return res.json(database.entries);
-	}
-	res.json('entry not found');
+	
+	db('entries')
+		.returning('*')
+		.where('id', '=', id)
+		.del()
+		.then(entry => {
+			res.json(entry[0]);
+		})
+		.catch(err => res.status(400).json('unable to delete'))
+
+	// let index = -1;
+	// for (let i = 0; i < database.entries.length; i++){
+	// 	if (database.entries[i].id === id){
+	// 		index = i;
+	// 	}
+	// }
+	// if (index !== -1){
+	// 	database.entries.splice(index,1);
+	// 	return res.json(database.entries);
+	// }
+	// res.json('entry not found');
 })
 
 //Edit entry type
 app.put('/entries', (req,res) => {
 	const {id, name, active} = req.body;
-	for (let i = 0; i < database.entries.length; i++){
-		if (database.entries[i].id === id){
-			database.entries[i].name = name;
-			database.entries[i].isactive = active;
-			return res.json(database.entries[i]);
-		}
-	}
-	res.json('entry not found');
+
+	db('entries')
+		.where('id','=', id)
+		.update({
+			name: name,
+			isactive: active,
+		})
+		.returning('*')
+		.then(entries => {
+			res.json(entries[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+
+	// for (let i = 0; i < database.entries.length; i++){
+	// 	if (database.entries[i].id === id){
+	// 		database.entries[i].name = name;
+	// 		database.entries[i].isactive = active;
+	// 		return res.json(database.entries[i]);
+	// 	}
+	// }
+	// res.json('entry not found');
 })
 
-//Admin assign call
+//Admin assign entry
 app.post('/sked/assign', (req,res) => {
 	const {docId, typeId, date} = req.body;
-	let index = -1;
-	for (let i = 0; i < database.users.length; i++){
-		if (database.users[i].id === docId){
-			for (let j = 0; j < database.users[i].worksked.length; j++){
-				if (database.users[i].worksked[j].date === date){
-					index = j;
-					break;
+	let index = -1
 
+	db.select('worksked')
+		.from('users')
+		.where('id', '=', docId)
+		.then(sked => {
+			const arr = sked[0].worksked;
+			for (let j = 0; j < arr.length; j++){
+	 			if (arr[j].date === date){
+	 				index = j;
+	 				break;
 				}
 			}
 			if (index !== -1){
-				database.users[i].worksked.splice(index, 1);
+				arr.splice(index,1);
 			}
 
-			database.users[i].worksked.push({
+			arr.push({
 				id: typeId,
 				date: date
 			})
-			return res.json(database.users[i]);
-		}
-	}
-	res.json('user not found');
+
+			db('users')
+				.where('id', '=', docId)
+				.update('worksked', arr)
+				.returning('*')
+				.then(user => {
+					res.json(user[0])
+				})
+				.catch(err => res.status(400).json('unable to assign entry'))
+
+		})
+		.catch(err => res.status(400).json('unable to access user'))
+
+
+	// let index = -1;
+	// for (let i = 0; i < database.users.length; i++){
+	// 	if (database.users[i].id === docId){
+	// 		for (let j = 0; j < database.users[i].worksked.length; j++){
+	// 			if (database.users[i].worksked[j].date === date){
+	// 				index = j;
+	// 				break;
+
+	// 			}
+	// 		}
+	// 		if (index !== -1){
+	// 			database.users[i].worksked.splice(index, 1);
+	// 		}
+
+	// 		database.users[i].worksked.push({
+	// 			id: typeId,
+	// 			date: date
+	// 		})
+	// 		return res.json(database.users[i]);
+	// 	}
+	// }
+	// res.json('user not found');
 })
 
 //Admin delete call
 app.delete('/sked/assign', (req,res) => {
 	const {docId, date, typeId} = req.body;
-	let index = -1;
-	for (let i = 0; i < database.users.length; i++){
-		if (database.users[i].id === docId){
-			for (let j = 0; j < database.users[i].worksked.length; j++){
-				if (database.users[i].worksked[j].date === date){
-					index = j;
-					break;
-
+	
+	db.select('worksked')
+		.from('users')
+		.where('id', '=', docId)
+		.then(sked => {
+			const arr = sked[0].worksked;
+			for (let j = 0; j < arr.length; j++){
+	 			if (arr[j].date === date){
+	 				index = j;
+	 				break;
 				}
 			}
 			if (index !== -1){
-				database.users[i].worksked.splice(index, 1);
+				arr.splice(index,1);
 			}
-			return res.json(database.users[i]);
-		}
-	}
-	res.json('user not found');
+
+			db('users')
+				.where('id', '=', docId)
+				.update('worksked', arr)
+				.returning('*')
+				.then(user => {
+					res.json(user[0])
+				})
+				.catch(err => res.status(400).json('unable to delete entry'))
+
+		})
+		.catch(err => res.status(400).json('unable to access user'))
+
+	// let index = -1;
+	// for (let i = 0; i < database.users.length; i++){
+	// 	if (database.users[i].id === docId){
+	// 		for (let j = 0; j < database.users[i].worksked.length; j++){
+	// 			if (database.users[i].worksked[j].date === date){
+	// 				index = j;
+	// 				break;
+
+	// 			}
+	// 		}
+	// 		if (index !== -1){
+	// 			database.users[i].worksked.splice(index, 1);
+	// 		}
+	// 		return res.json(database.users[i]);
+	// 	}
+	// }
+	// res.json('user not found');
 
 })
 
@@ -986,40 +1072,62 @@ app.delete('/sked/assign', (req,res) => {
 app.post('/forgot', (req, res) => {
 	const {email} = req.body;
 	const password = generatePassword(16, false);
-	//HASH PASSWORD
-	let name = '';
-	let flag = false;
-	for (let i = 0; i < database.users.length; i++){
-		if (database.users[i].email === email){
-			name = database.users[i].firstname;
-			flag = true;
-			database.users[i].password = password;
-		}
-	}
+	const salt = bcrypt.genSaltSync(10);
+	const hash = bcrypt.hashSync(password, salt);
+	let name = ''
 
-	if (flag){
-		var mailOptions = {
-	  		from: 'menisked@gmail.com',
-	  		to: email,
-	  		subject: 'Recover your MeniSked Password.',
-	 	 	text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
-		};
+	db.select('*')
+		.from('users')
+		.where('email', email)
+		.then(user => {
+			name = user[0].firstname
+		})
+		.catch(err => res.status(400).json('unable to get user'))
 
-		transporter.sendMail(mailOptions, function(error, info){
-  			if (error) {
-    			return res.json(error);
-  			} 
-  			return res.json(info.response);
-		});
-	}
-	else{
-		return res.status(400).json('user not found');
-	}	
+
+	db('login')
+		.where('email', email)
+		.update('hash', hash)
+		.returning('id','email')
+		.then(user => {
+			res.json(user[0]);
+			var mailOptions = {
+	  			from: 'menisked@gmail.com',
+	  			to: email,
+	  			subject: 'Recover your MeniSked Password.',
+	 	 		text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
+			};
+
+			transporter.sendMail(mailOptions, function(error, info){
+  				if (error) {
+    				res.json(error);
+  				} 
+  				res.json(info.response);
+			});
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+
+
+	// let name = '';
+	// let flag = false;
+	// for (let i = 0; i < database.users.length; i++){
+	// 	if (database.users[i].email === email){
+	// 		name = database.users[i].firstname;
+	// 		flag = true;
+	// 		database.users[i].password = password;
+	// 	}
+	// }
 })
 
 //Get published months
 app.get('/published', (req,res) => {
-	res.json(database.published);
+	db.select('published')
+		.from('other')
+		.then(num => {
+			res.json(parseInt(num[0].published,10));
+		})
+		.catch(err => res.status(400).json('unable to get num'))
+	// res.json(database.published);
 })
 
 //Update published months
@@ -1028,7 +1136,7 @@ app.put('/published', (req,res) => {
 	db('other').update('published', newNum)
 	.returning('published')
 	.then(published => {
-		res.json(published[0]);
+		res.json(parseInt(published[0],10));
 	})
 	.catch(err => res.status(400).json('unable to get published'))
 	// database.published = newNum;
