@@ -293,7 +293,6 @@ app.post('/register', (req, res) => {
 		colours = clrs[0].colours;
 		db('users').count('id').then(ctr => {
 			colour = colours[ctr[0].count];
-			console.log(colour);
 			db.transaction(trx => {
 				trx.insert({
 					hash: hash,
@@ -426,8 +425,12 @@ app.delete('/holiday/:type', (req,res) => {
 	const {name} = req.body;
 	
 	db(type+'holidays')
+		.returning('*')
 		.where('name', '=', name)
 		.del()
+		.then(holiday => {
+			res.json(holiday[0]);
+		})
 	// for (let i = 0; i < database.holidays[j].length; i++){
 	// 	if (database.holidays[j][i].name === name){
 	// 		index = i;
@@ -586,8 +589,12 @@ app.put('/callTypes', (req, res) => {
 app.delete('/callTypes', (req,res) => {
 	const {id} = req.body;
 	db('entries')
+		.returning('*')	
 		.where('id', '=', id)
-		.del();
+		.del()
+		.then(call => {
+			res.json(call[0]);
+		})
 
 	// let index = -1;
 	// let priority = -1;
@@ -643,7 +650,6 @@ app.post('/people', (req, res) => {
 		colours = clrs[0].colours;
 		db('users').count('id').then(ctr => {
 			colour = colours[ctr[0].count];
-			console.log(colour);
 			db.transaction(trx => {
 				trx.insert({
 					hash: hash,
@@ -722,13 +728,22 @@ app.put('/people', (req, res) => {
 
 //Deleting a user
 app.delete('/people', (req,res) => {
-	const {id, loginid} = req.body;
+	const {email} = req.body;
 	db('users')
-		.where('id', '=', id)
-		.del();
+		.returning('*')
+		.where('email', email)
+		.del()
+		.then(user => {
+			res.json(user[0]);
+		})
 	db('login')
-		.where('id', '=', loginid)
-		.del(); 
+		.returning('*')
+		.where('email', email)
+		.del()
+		.then(user => {
+			res.json(user[0]);
+		})
+
 	// let found = false;
 	// database.users.forEach((user, i) => {
 	// 	if (user.id === id){
@@ -744,26 +759,62 @@ app.delete('/people', (req,res) => {
 
 //Getting all users
 app.get('/people', (req, res) => {
-	res.json(database.users);
+	db.select('*')
+		.from('users')
+		.then(users => {
+			res.json(users);
+		})
+		.catch(err => res.status(400).json('unable to get users'))
+	// res.json(database.users);
 })
 
 //Editing account information
 app.put('/account/:id', (req,res) => {
 	const {id} = req.params;
 	const {firstname, lastname, email} = req.body;
-	let found = false;
-	database.users.forEach((user, i) => {
-		if (user.id === id){
-			found = true;
-			database.users[i].firstname = firstname;
-			database.users[i].lastname = lastname;
-			database.users[i].email = email;
-			return res.json(database.users[i]);
-		}
-	})
-	if (!found){
-		res.status(404).json('no such user');
-	}
+	
+	db.select('email')
+		.from('users')
+		.where('id', '=', id)
+		.then(mail => {
+			const eml = mail[0].email;
+			db('login')
+				.where('email', eml)
+				.update('email', email)
+				.returning('*')
+				.then(person => {
+					res.json(person[0]);
+				})
+				.catch(err => res.status(400).json('unable to edit'))
+			})
+		.catch(err => res.status(400).json('unable to access user'))
+	db('users')
+		.where('id','=', id)
+		.update({
+			firstname: firstname,
+			lastname: lastname,
+			email: email
+		})
+		.returning('*')
+		.then(user => {
+			res.json(user[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+
+
+	// let found = false;
+	// database.users.forEach((user, i) => {
+	// 	if (user.id === id){
+	// 		found = true;
+	// 		database.users[i].firstname = firstname;
+	// 		database.users[i].lastname = lastname;
+	// 		database.users[i].email = email;
+	// 		return res.json(database.users[i]);
+	// 	}
+	// })
+	// if (!found){
+	// 	res.status(404).json('no such user');
+	// }
 })
 
 //Editing account's password
