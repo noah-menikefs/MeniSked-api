@@ -459,7 +459,7 @@ app.put('/callTypes', (req, res) => {
 						.then(all => {
 							// res.json(all);
 						})
-						.catch(err => res.status(400).json('unable to increment'))
+						.catch(err => res.status(400).json('unable to decrement'))
 				}
 				db('entries')
 					.where('id','=', id)
@@ -476,78 +476,36 @@ app.put('/callTypes', (req, res) => {
 			}
 		})				
 		.catch(err => res.status(404).json('could not access entry'))
-
-	
-	
-	//MOVE AROUND PRIORITIES
-
-
-	// let index = -1;
-	// for (let i = 0; i < database.callTypes.length; i++){
-	// 	if (database.callTypes[i].id === id){
-	// 		index = i;
-	// 	}
-	// }
-	// if (index !== -1){
-	// 	const p = database.callTypes[index].priority
-	// 	if (p !== priority){
-	// 		if (p > priority){
-	// 			database.callTypes.forEach((call,n) => {
-	// 				if (priority <= database.callTypes[n].priority && database.callTypes[n].priority < p){
-	// 					return database.callTypes[n].priority = database.callTypes[n].priority + 1;
-	// 				}
-	// 			})
-	// 		}
-	// 		else{
-	// 			database.callTypes.forEach((call,n) => {
-	// 				if (priority >= database.callTypes[n].priority && database.callTypes[n].priority > p){
-	// 					return database.callTypes[n].priority = database.callTypes[n].priority - 1;
-	// 				}
-	// 			})
-	// 		}
-	// 	}
-	// 	database.callTypes[index].name = name;
-	// 	database.callTypes[index].priority = priority;
-	// 	database.callTypes[index].active = active;
-	// 	res.json(database.callTypes[index]);
-	// }
-	// else{
-	// 	res.status(404).json('no such holiday');
-	// }
 })
 
 //Deleting a call type
 app.delete('/callTypes', (req,res) => {
 	const {id} = req.body;
-	db('entries')
-		.returning('*')	
-		.where('id', '=', id)
-		.del()
-		.then(call => {
-			res.json(call[0]);
-		})
+	let oldP = -1;
 
-	// let index = -1;
-	// let priority = -1;
-	// for (let i = 0; i < database.callTypes.length; i++){
-	// 	if (database.callTypes[i].id === id){
-	// 		index = i;
-	// 		priority = database.callTypes[i].priority;
-	// 		break;
-	// 	}
-	// }
-	// if (index !== -1){
-	// 	database.callTypes.splice(index,1);
-	// 	for (let n = 0; n < database.callTypes.length; n++){
-	// 		if (database.callTypes[n].priority > priority){
-	// 			database.callTypes[n].priority = database.callTypes[n].priority - 1;
-	// 		}
-	// 	}
-	// 	res.json(database.callTypes);
-	// }
-	// else{
-	// 	res.status(404).json('no such holiday');
-	// }
+	db.select('priority')
+		.from('entries')
+		.where('id', '=', id)
+		.then(pri => {
+			oldP = pri[0].priority;
+			db('entries')
+				.where('priority', '>', oldP)
+				.decrement('priority', 1)
+				.returning('*')
+				.then(all => {
+					// res.json(all);
+				})
+				.catch(err => res.status(400).json('unable to decrement'))
+			db('entries')
+				.returning('*')	
+				.where('id', '=', id)
+				.del()
+				.then(call => {
+					res.json(call[0]);
+				})
+				.catch(err => res.status(400).json('unable to delete'))
+		})
+		.catch(err => res.status(400).json('unable to access entry'))
 })
 
 //Getting call types
@@ -555,9 +513,12 @@ app.get('/callTypes', (req,res) => {
 	db.select('*')
 		.from('entries')
 		.then(entries => {
-			res.json(entries);
+			const calls = entries.filter((call => {
+				return call.type === 1;
+			}))
+			res.json(calls);
 		})
-		.catch(err => res.status(400).json('unable to get holiday'))
+		.catch(err => res.status(400).json('unable to get calls'))
 })
 
 //Adding a user
@@ -616,19 +577,6 @@ app.post('/people', (req, res) => {
 			});
 		});
 	});
-
-	// database.users.push({
-	// 	id: database.users.length+20,
-	// 	firstname: firstname,
-	// 	lastname: lastname,
-	// 	email: email,
-	// 	colour: database.colours[database.users.length%20],
-	// 	password: password,
-	// 	department: department,
-	// 	isadmin: false,
-	// 	isactive: true,
-	// 	worksked: []
-	// })
 })
 
 //Editing a user
@@ -644,17 +592,6 @@ app.put('/people', (req, res) => {
 			res.json(user[0]);
 		})
 		.catch(err => res.status(400).json('unable to edit'))
-	// let found = false;
-	// database.users.forEach((user, i) => {
-	// 	if (user.id === id){
-	// 		found = true;
-	// 		database.users[i].isactive = isactive;
-	// 		return res.json(database.users[i]);
-	// 	}
-	// })
-	// if (!found){
-	// 	res.status(404).json('no such user');
-	// }
 })
 
 //Deleting a user
@@ -676,18 +613,6 @@ app.delete('/people', (req,res) => {
 			res.json(user[0]);
 		})
 		.catch(err => res.status(400).json('unable to delete'))
-
-	// let found = false;
-	// database.users.forEach((user, i) => {
-	// 	if (user.id === id){
-	// 		found = true;
-	// 		database.users.splice(i, 1);
-	// 		return res.json(database.users);
-	// 	}
-	// })
-	// if (!found){
-	// 	res.status(404).json('no such user');
-	// }
 })
 
 //Getting all users
@@ -695,10 +620,14 @@ app.get('/people', (req, res) => {
 	db.select('*')
 		.from('users')
 		.then(users => {
-			res.json(users);
+			const ppl = users.sort(function(a, b){
+				if (a.lastname < b.lastname) { return -1; }
+				if (a.lastname > b.lastname) { return 1; }
+				return 0;
+			});
+			res.json(ppl);
 		})
 		.catch(err => res.status(400).json('unable to get users'))
-	// res.json(database.users);
 })
 
 //Editing account information
@@ -733,21 +662,6 @@ app.put('/account/:id', (req,res) => {
 			res.json(user[0]);
 		})
 		.catch(err => res.status(400).json('unable to edit'))
-
-
-	// let found = false;
-	// database.users.forEach((user, i) => {
-	// 	if (user.id === id){
-	// 		found = true;
-	// 		database.users[i].firstname = firstname;
-	// 		database.users[i].lastname = lastname;
-	// 		database.users[i].email = email;
-	// 		return res.json(database.users[i]);
-	// 	}
-	// })
-	// if (!found){
-	// 	res.status(404).json('no such user');
-	// }
 })
 
 //Editing account's password
@@ -773,26 +687,11 @@ app.post('/account/:id', (req,res) => {
 				.catch(err => res.status(400).json('unable to edit'))
 			})
 		.catch(err => res.status(400).json('unable to access user'))
-
-
-	// let found = false;
-	// //HASH PASSWORD HERE
-	// database.users.forEach((user, i) => {
-	// 	if (user.id === id){
-	// 		found = true;
-	// 		database.users[i].password = password;
-	// 		return res.json(database.users[i]);
-	// 	}
-	// })
-	// if (!found){
-	// 	res.status(404).json('no such user');
-	// }
 })
 
 //Getting user's account information
 app.get('/account/:id', (req,res) => {
 	const {id} = req.params;
-	// let found = false;
 	db.select('*').from('users').where({id})
 		.then(user => {
 			if (user.length){
@@ -803,15 +702,6 @@ app.get('/account/:id', (req,res) => {
 			}
 		})
 		.catch(err => res.status(400).json('error getting user'))
-	// database.users.forEach((user) => {
-	// 	if (user.id === id){
-	// 		found = true;
-	// 		return res.json(user);
-	// 	}
-	// })
-	// if (!found){
-	// 	res.status(404).json('no such user');
-	// }
 })
 
 //Add note
@@ -829,14 +719,6 @@ app.post('/sked/notes', (req, res) => {
 			res.json(note[0]);
 		})
 		.catch(err => res.status(404).json('could not add note'))
-
-	// database.notes.push({
-	// 	id: (database.notes.length + 20),
-	// 	type: type,
-	// 	date: date,
-	// 	msg: msg
-	// })
-	// res.json(database.notes[database.notes.length -1]);
 })
 
 //Getting all notes 
@@ -847,8 +729,6 @@ app.get('/sked/allNotes', (req, res) => {
 			res.json(notes);
 		})
 		.catch(err => res.status(400).json('unable to get notes'))
-
-	// res.json(database.notes);
 })
 
 
@@ -860,7 +740,12 @@ app.get('/sked/docs', (req, res) => {
 			const arr = users.filter((user => {
 				return user.isactive === true;
 			}))
-			res.json(arr);
+			const docs = arr.sort(function(a, b){
+				if (a.lastname < b.lastname) { return -1; }
+				if (a.lastname > b.lastname) { return 1; }
+				return 0;
+			});
+			res.json(docs);
 		})
 		.catch(err => res.status(400).json('unable to get docs'))
 })
@@ -870,11 +755,12 @@ app.get('/sked/entries', (req,res) => {
 	db.select('*')
 		.from('entries')
 		.then(entries => {
-			res.json(entries);
+			const entrs = entries.filter((entry => {
+				return entry.type === 0;
+			}))
+			res.json(entrs);
 		})
 		.catch(err => res.status(400).json('unable to get entries'))
-
-	// res.json(database.entries);
 })
 
 //Add entry type
@@ -893,13 +779,6 @@ app.post('/entries', (req,res) => {
 			res.json(entry[0]);
 		})
 		.catch(err => res.status(404).json('could not add entry'))
-
-	// database.entries.push({
-	// 	id: database.entries.length + 20,
-	// 	name: name,
-	// 	isactive: active
-	// })
-	// res.json(database.entries[database.entries.length-1]);
 })
 
 //Delete entry type
@@ -914,18 +793,6 @@ app.delete('/entries', (req, res) => {
 			res.json(entry[0]);
 		})
 		.catch(err => res.status(400).json('unable to delete'))
-
-	// let index = -1;
-	// for (let i = 0; i < database.entries.length; i++){
-	// 	if (database.entries[i].id === id){
-	// 		index = i;
-	// 	}
-	// }
-	// if (index !== -1){
-	// 	database.entries.splice(index,1);
-	// 	return res.json(database.entries);
-	// }
-	// res.json('entry not found');
 })
 
 //Edit entry type
@@ -943,15 +810,6 @@ app.put('/entries', (req,res) => {
 			res.json(entries[0]);
 		})
 		.catch(err => res.status(400).json('unable to edit'))
-
-	// for (let i = 0; i < database.entries.length; i++){
-	// 	if (database.entries[i].id === id){
-	// 		database.entries[i].name = name;
-	// 		database.entries[i].isactive = active;
-	// 		return res.json(database.entries[i]);
-	// 	}
-	// }
-	// res.json('entry not found');
 })
 
 //Admin assign entry
@@ -990,30 +848,6 @@ app.post('/sked/assign', (req,res) => {
 
 		})
 		.catch(err => res.status(400).json('unable to access user'))
-
-
-	// let index = -1;
-	// for (let i = 0; i < database.users.length; i++){
-	// 	if (database.users[i].id === docId){
-	// 		for (let j = 0; j < database.users[i].worksked.length; j++){
-	// 			if (database.users[i].worksked[j].date === date){
-	// 				index = j;
-	// 				break;
-
-	// 			}
-	// 		}
-	// 		if (index !== -1){
-	// 			database.users[i].worksked.splice(index, 1);
-	// 		}
-
-	// 		database.users[i].worksked.push({
-	// 			id: typeId,
-	// 			date: date
-	// 		})
-	// 		return res.json(database.users[i]);
-	// 	}
-	// }
-	// res.json('user not found');
 })
 
 //Admin delete call
@@ -1046,25 +880,6 @@ app.delete('/sked/assign', (req,res) => {
 
 		})
 		.catch(err => res.status(400).json('unable to access user'))
-
-	// let index = -1;
-	// for (let i = 0; i < database.users.length; i++){
-	// 	if (database.users[i].id === docId){
-	// 		for (let j = 0; j < database.users[i].worksked.length; j++){
-	// 			if (database.users[i].worksked[j].date === date){
-	// 				index = j;
-	// 				break;
-
-	// 			}
-	// 		}
-	// 		if (index !== -1){
-	// 			database.users[i].worksked.splice(index, 1);
-	// 		}
-	// 		return res.json(database.users[i]);
-	// 	}
-	// }
-	// res.json('user not found');
-
 })
 
 
@@ -1107,16 +922,6 @@ app.post('/forgot', (req, res) => {
 		})
 		.catch(err => res.status(400).json('unable to edit'))
 
-
-	// let name = '';
-	// let flag = false;
-	// for (let i = 0; i < database.users.length; i++){
-	// 	if (database.users[i].email === email){
-	// 		name = database.users[i].firstname;
-	// 		flag = true;
-	// 		database.users[i].password = password;
-	// 	}
-	// }
 })
 
 //Get published months
@@ -1127,7 +932,6 @@ app.get('/published', (req,res) => {
 			res.json(parseInt(num[0].published,10));
 		})
 		.catch(err => res.status(400).json('unable to get num'))
-	// res.json(database.published);
 })
 
 //Update published months
@@ -1139,8 +943,6 @@ app.put('/published', (req,res) => {
 		res.json(parseInt(published[0],10));
 	})
 	.catch(err => res.status(400).json('unable to get published'))
-	// database.published = newNum;
-	// res.json(database.published);
 })
 
 
