@@ -430,7 +430,7 @@ app.post('/callTypes', (req,res) => {
 //Editing a call type
 app.put('/callTypes', (req, res) => {
 	const {id, name, priority, active} = req.body;
-	
+
 	let oldP = -1;
 
 	db.select('priority')
@@ -461,7 +461,8 @@ app.put('/callTypes', (req, res) => {
 						})
 						.catch(err => res.status(400).json('unable to decrement'))
 				}
-				db('entries')
+			}
+			db('entries')
 					.where('id','=', id)
 					.update({
 						name: name,
@@ -473,7 +474,6 @@ app.put('/callTypes', (req, res) => {
 						res.json(call[0]);
 					})
 					.catch(err => res.status(400).json('unable to edit'))
-			}
 		})				
 		.catch(err => res.status(404).json('could not access entry'))
 })
@@ -645,7 +645,7 @@ app.put('/account/:id', (req,res) => {
 				.update('email', email)
 				.returning('*')
 				.then(person => {
-					res.json(person[0]);
+					// res.json(person[0]);
 				})
 				.catch(err => res.status(400).json('unable to edit'))
 			})
@@ -896,31 +896,34 @@ app.post('/forgot', (req, res) => {
 		.where('email', email)
 		.then(user => {
 			name = user[0].firstname
-		})
+			db('login')
+				.where('email', email)
+				.update('hash', hash)
+				.returning('id','email')
+				.then(user => {
+					res.json(user[0]);
+					var mailOptions = {
+			  			from: 'menisked@gmail.com',
+			  			to: email,
+			  			subject: 'Recover your MeniSked Password.',
+			 	 		text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
+					};
+
+					transporter.sendMail(mailOptions, function(error, info){
+		  				if (error) {
+		    				res.json(error);
+		  				} 
+		  				if (info){
+		  					res.json(info.response);
+		  				}
+					});
+				})
+				.catch(err => res.status(400).json('unable to edit'))
+				})
 		.catch(err => res.status(400).json('unable to get user'))
 
 
-	db('login')
-		.where('email', email)
-		.update('hash', hash)
-		.returning('id','email')
-		.then(user => {
-			res.json(user[0]);
-			var mailOptions = {
-	  			from: 'menisked@gmail.com',
-	  			to: email,
-	  			subject: 'Recover your MeniSked Password.',
-	 	 		text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
-			};
-
-			transporter.sendMail(mailOptions, function(error, info){
-  				if (error) {
-    				res.json(error);
-  				} 
-  				res.json(info.response);
-			});
-		})
-		.catch(err => res.status(400).json('unable to edit'))
+	
 
 })
 
