@@ -931,10 +931,6 @@ app.post('/forgot', (req, res) => {
 				.catch(err => res.status(400).json('unable to edit'))
 				})
 		.catch(err => res.status(400).json('unable to get user'))
-
-
-	
-
 })
 
 //Get published months
@@ -957,6 +953,69 @@ app.put('/published', (req,res) => {
 	})
 	.catch(err => res.status(400).json('unable to get published'))
 })
+
+//Get all messages 
+app.get('/amessages', (req,res) => {
+	db.select('*')
+		.from('messages')
+		.then(messages => {
+			res.json(messages);
+		})
+		.catch(err => res.status(400).json('unable to get messages'))
+})
+
+//Get employee's messages
+app.get('/emessages/:id', (req,res) => {
+	const {id} = req.params;
+	db.select('*')
+		.from('messages')
+		.where('docid', '=', id)
+		.then(messages => {
+			res.json(messages);
+		})
+		.catch(err => res.status(400).json('unable to get messages'))
+})
+
+//Employee making a request
+app.post('/request', (req,res) => {
+	const {docid, entryid, dates, stamp} = req.body;
+	db('messages')
+		.returning('*')
+		.insert({
+			docid: docid,
+			entryid: entryid,
+			dates: dates,
+			stamp: stamp,
+			status: 'pending',
+			msg: ''
+		})
+		.then(message => {
+			res.json(message[0]);
+		})
+		.catch(err => res.status(404).json('could not add message'))
+})
+
+//Admin responding to a pending request
+app.put('/amessages', (req,res) => {
+	const {id, status, msg} = req.body;
+	db('messages')
+		.where('id','=', id)
+		.update({
+			status: status,
+			msg: msg,
+		})
+		.returning('*')
+		.then(message => {
+			res.json(message[0]);
+		})
+		.catch(err => res.status(400).json('unable to respond'))
+})
+
+//Employee cancelling a request
+
+//Employee editing a request's dates
+
+
 
 
 
