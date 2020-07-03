@@ -978,13 +978,13 @@ app.get('/emessages/:id', (req,res) => {
 
 //Employee making a request
 app.post('/request', (req,res) => {
-	const {docid, entryid, dates, stamp} = req.body;
+	const {docid, entryid, date, stamp} = req.body;
 	db('messages')
 		.returning('*')
 		.insert({
 			docid: docid,
 			entryid: entryid,
-			dates: dates,
+			dates: [date],
 			stamp: stamp,
 			status: 'pending',
 			msg: ''
@@ -1014,8 +1014,20 @@ app.put('/amessages', (req,res) => {
 //Employee cancelling a request
 
 //Employee editing a request's dates
-
-
+app.put('/request', (req,res) => {
+	const {docid, entryid, date} = req.body;
+	db('messages')
+		.where('docid', '=', docid)
+		.andWhere('entryid', '=', entryid)
+		.update({
+			dates: db.raw('array_append(dates, ?)', [date]),
+		})
+		.returning('*')
+		.then(message => {
+			res.json(message[0]);
+		})
+		.catch(err => res.status(404).json('unable to edit'))
+})
 
 
 
