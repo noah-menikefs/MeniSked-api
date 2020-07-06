@@ -979,6 +979,7 @@ app.get('/emessages/:id', (req,res) => {
 //Employee making a request
 app.post('/request', (req,res) => {
 	const {docid, entryid, date, stamp} = req.body;
+
 	db('messages')
 		.returning('*')
 		.insert({
@@ -997,12 +998,13 @@ app.post('/request', (req,res) => {
 
 //Admin responding to a pending request
 app.put('/amessages', (req,res) => {
-	const {id, status, msg} = req.body;
+	const {id, status, msg, stamp} = req.body;
 	db('messages')
 		.where('id','=', id)
 		.update({
 			status: status,
 			msg: msg,
+			stamp: stamp
 		})
 		.returning('*')
 		.then(message => {
@@ -1032,7 +1034,10 @@ app.put('/request', (req,res) => {
 		.catch(err => res.status(404).json('unable to edit'))
 })
 
-//Admin accepting a request (updates the employee's eventSked)
+//Admin accepting a request (updates the employee's workSked)
+
+
+
 
 
 app.listen(3000, () => {
