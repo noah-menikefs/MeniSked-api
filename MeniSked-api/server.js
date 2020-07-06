@@ -1013,6 +1013,9 @@ app.put('/amessages', (req,res) => {
 
 //Employee cancelling a request
 
+
+
+
 //Employee editing a request's dates
 app.put('/request', (req,res) => {
 	const {docid, entryid, date} = req.body;
@@ -1029,24 +1032,8 @@ app.put('/request', (req,res) => {
 		.catch(err => res.status(404).json('unable to edit'))
 })
 
+//Admin accepting a request (updates the employee's eventSked)
 
-
-	
-//Generate PDF
-// app.post('/create-pdf', (req,res) => {
-// 	pdf.create(pdfTemplate(req.body), {}).toFile('result.pdf',(err) => {
-// 		if (err){
-// 			res.send(Promise.reject());
-// 		}
-
-// 		res.send(Promise.resolve());
-// 	});
-// });
-
-// //GET - Send PDF to client
-// app.get('/fetch-pdf', (req,res) => {
-// 	res.sendFile(`${__dirname}/result.pdf`)
-// })
 
 app.listen(3000, () => {
 	console.log('app is running on port 3000');
