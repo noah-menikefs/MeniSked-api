@@ -28,17 +28,11 @@ const db = knex({
     }
 });
 
-
-db.select('*').from('users').then(data => {
-	console.log(data);
-});
-
 const app = express();
 
 app.use(express.urlencoded({extended: true}))
 app.use(express.json());
 app.use(cors())
-
 
 // const database = {
 // 	users: [
@@ -176,9 +170,6 @@ app.use(cors())
 // 			name: "Assign Specific Call",
 // 			isactive: true
 // 		}
-
-
-
 // 	],
 // 	callTypes: [
 // 		{
@@ -367,25 +358,6 @@ app.put('/request', (req,res) => {request.editRequest(req,res,db)})
 //Admin accepting a request (updates the employee's workSked)
 
 
-
-
-
 app.listen(3000, () => {
 	console.log('app is running on port 3000');
 })
-
-
-
-
-
-/*
-/ --> res = this is working
-/login --> POST = success/fail (always want to send passwords as POST)
-/register --> POST = user 
-/sked --> PUT/POST/GET/DELETE --> skedEvents 
-/holiday --> GET/POST/PUT/DELETE --> holidays
-/callTypes --> GET/POST/PUT/DELETE --> calls
-/people --> GET/POST/PUT/DELETE --> user
-/messages --> POST/GET --> messages 
-/account --> GET/POST/PUT --> user
-*/
