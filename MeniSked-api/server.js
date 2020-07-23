@@ -3,12 +3,20 @@ const bodyParser = require('body-parser');
 var bcrypt = require('bcryptjs');
 const cors = require('cors');
 const nodemailer = require("nodemailer");
-var generatePassword = require("password-generator");
+var genPass = require("password-generator");
 const knex = require('knex');
 
 const register = require('./controllers/register');
 const login = require('./controllers/login');
 const holiday = require('./controllers/holiday');
+const calltype = require('./controllers/calltype');
+const people = require('./controllers/people');
+const account = require('./controllers/account');
+const sked = require('./controllers/sked');
+const entries = require('./controllers/entries');
+const messages = require('./controllers/messages');
+const request = require('./controllers/request');
+const published = require('./controllers/published');
 
 const db = knex({
 	client: 'pg',
@@ -248,6 +256,9 @@ var transporter = nodemailer.createTransport({
 //Checks if a user's login info is correct
 app.post('/login', (req, res) => {login.handleLogin(req,res,db,bcrypt)})
 
+//User forgot password
+app.post('/forgot', (req, res) => {login.forgotPassword(req,res,db,bcrypt,genPass)})
+
 //Adds a new user to the "database"
 app.post('/register', (req,res) => {register.handleRegister(req, res, db, bcrypt) })
 
@@ -270,637 +281,88 @@ app.post('/holiday/nr', (req,res) => {holiday.addNonRecurring(req,res,db)})
 app.put('/holiday/snr', (req,res) => {holiday.skedHoliday(req,res,db)})
 
 //Adding a call type
-app.post('/callTypes', (req,res) => {
-	const {name, priority, active} = req.body;
-	db('entries')
-		.where('priority','>=', priority)
-		.increment('priority', 1)
-		.returning('*')
-		.then(all => {
-			// res.json(all);
-		})
-		.catch(err => res.status(400).json('unable to increment'))
-
-	db('entries')
-		.returning('*')
-		.insert({
-			name: name,
-			isactive: active,
-			priority: priority,
-			type: 1
-		})
-		.then(entry => {
-			res.json(entry[0]);
-		})
-		.catch(err => res.status(404).json('could not add entry'))
-})
+app.post('/callTypes', (req,res) => {calltype.addCall(req,res,db)})
 
 //Editing a call type
-app.put('/callTypes', (req, res) => {
-	const {id, name, priority, active} = req.body;
-
-	let oldP = -1;
-
-	db.select('priority')
-		.from('entries')
-		.where('id', '=', id)
-		.then(pri => {
-			oldP = pri[0].priority;
-			if (oldP !== priority){
-				if (oldP > priority){
-					db('entries')
-						.where('priority','>=', priority)
-						.andWhere('priority', '<', oldP)
-						.increment('priority', 1)
-						.returning('*')
-						.then(all => {
-							// res.json(all);
-						})
-						.catch(err => res.status(400).json('unable to increment'))
-				}
-				else{
-					db('entries')
-						.where('priority','<=', priority)
-						.andWhere('priority', '>', oldP)
-						.decrement('priority', 1)
-						.returning('*')
-						.then(all => {
-							// res.json(all);
-						})
-						.catch(err => res.status(400).json('unable to decrement'))
-				}
-			}
-			db('entries')
-					.where('id','=', id)
-					.update({
-						name: name,
-						priority: priority,
-						isactive: active
-					})
-					.returning('*')
-					.then(call => {
-						res.json(call[0]);
-					})
-					.catch(err => res.status(400).json('unable to edit'))
-		})				
-		.catch(err => res.status(404).json('could not access entry'))
-})
+app.put('/callTypes', (req,res) => {calltype.editCall(req,res,db)})
 
 //Deleting a call type
-app.delete('/callTypes', (req,res) => {
-	const {id} = req.body;
-	let oldP = -1;
-
-	db.select('priority')
-		.from('entries')
-		.where('id', '=', id)
-		.then(pri => {
-			oldP = pri[0].priority;
-			db('entries')
-				.where('priority', '>', oldP)
-				.decrement('priority', 1)
-				.returning('*')
-				.then(all => {
-					// res.json(all);
-				})
-				.catch(err => res.status(400).json('unable to decrement'))
-			db('entries')
-				.returning('*')	
-				.where('id', '=', id)
-				.del()
-				.then(call => {
-					res.json(call[0]);
-				})
-				.catch(err => res.status(400).json('unable to delete'))
-		})
-		.catch(err => res.status(400).json('unable to access entry'))
-})
+app.delete('/callTypes', (req,res) => {calltype.deleteCall(req,res,db)})
 
 //Getting call types
-app.get('/callTypes', (req,res) => {
-	db.select('*')
-		.from('entries')
-		.then(entries => {
-			const calls = entries.filter((call => {
-				return call.type === 1;
-			}))
-			res.json(calls);
-		})
-		.catch(err => res.status(400).json('unable to get calls'))
-})
+app.get('/callTypes', (req,res) => {calltype.getCall(req,res,db)})
 
 //Adding a user
-app.post('/people', (req, res) => {
-	const {email, firstname, lastname, department} = req.body;
-
-	const password = generatePassword(16, false);
-	const salt = bcrypt.genSaltSync(10);
-	const hash = bcrypt.hashSync(password, salt);
-	let colour = '';
-	let colours = '';
-
-	var mailOptions = {
-	  	from: 'menisked@gmail.com',
-	  	to: email,
-	  	subject: 'Welcome to MeniSked!',
-	 	text: 'Hey '+firstname+',\n\nYour administrator has set up your MeniSked account and you have been given a temporary password: '+password+'. Please login using this password and immediately navigate to the account page. Here you will be able to change it to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
-	};
-
-	db.select('colours').from('other').then(clrs => {
-		colours = clrs[0].colours;
-		db('users').count('id').then(ctr => {
-			colour = colours[ctr[0].count];
-			db.transaction(trx => {
-				trx.insert({
-					hash: hash,
-					email: email
-				})
-				.into('login')
-				.returning('email')
-				.then(loginemail => {
-					return trx('users')
-						.returning('*')
-						.insert({
-							email: loginemail[0],
-							firstname: firstname,
-							lastname: lastname,
-							colour: colour,
-							department: department,
-							isadmin: false,
-							isactive: true,
-							worksked: []
-						})
-						.then(user => {
-							transporter.sendMail(mailOptions, function(error, info){
-  								if (error) {
-    								res.json(error);
-  								}
-							})
-							res.json(user[0]);
-						})
-					.then(trx.commit)
-					.catch(trx.rollback)
-				})
-			.catch(err => res.status(400).json('error while registering'));
-			});
-		});
-	});
-})
+app.post('/people', (req,res) => {people.addUser(req,res,db,genPass)})
 
 //Editing a user
-app.put('/people', (req, res) => {
-	const {id, isactive} = req.body;
-	db('users')
-		.where('id','=', id)
-		.update({
-			isactive: isactive
-		})
-		.returning('*')
-		.then(user => {
-			res.json(user[0]);
-		})
-		.catch(err => res.status(400).json('unable to edit'))
-})
+app.put('/people', (req,res) => {people.editUser(req,res,db)})
 
 //Deleting a user
-app.delete('/people', (req,res) => {
-	const {email} = req.body;
-	db('users')
-		.returning('*')
-		.where('email', email)
-		.del()
-		.then(user => {
-			res.json(user[0]);
-		})
-		.catch(err => res.status(400).json('unable to delete'))
-	db('login')
-		.returning('*')
-		.where('email', email)
-		.del()
-		.then(user => {
-			res.json(user[0]);
-		})
-		.catch(err => res.status(400).json('unable to delete'))
-})
+app.delete('/people', (req,res) => {people.deleteUser(req,res,db)})
 
 //Getting all users
-app.get('/people', (req, res) => {
-	db.select('*')
-		.from('users')
-		.then(users => {
-			const ppl = users.sort(function(a, b){
-				if (a.lastname < b.lastname) { return -1; }
-				if (a.lastname > b.lastname) { return 1; }
-				return 0;
-			});
-			res.json(ppl);
-		})
-		.catch(err => res.status(400).json('unable to get users'))
-})
+app.get('/people', (req,res) => {people.getUser(req,res,db)})
 
 //Editing account information
-app.put('/account/:id', (req,res) => {
-	const {id} = req.params;
-	const {firstname, lastname, email} = req.body;
-
-	db.select('email')
-		.from('users')
-		.where('id', '=', id)
-		.then(mail => {
-			const eml = mail[0].email;
-			db('login')
-				.where('email', eml)
-				.update('email', email)
-				.returning('*')
-				.then(person => {
-					// res.json(person[0]);
-				})
-				.catch(err => res.status(400).json('unable to edit'))
-			})
-		.catch(err => res.status(400).json('unable to access user'))
-	db('users')
-		.where('id','=', id)
-		.update({
-			firstname: firstname,
-			lastname: lastname,
-			email: email
-		})
-		.returning('*')
-		.then(user => {
-			res.json(user[0]);
-		})
-		.catch(err => res.status(400).json('unable to edit'))
-})
+app.put('/account/:id', (req,res) => {account.editAccountInfo(req,res,db)})
 
 //Editing account's password
-app.post('/account/:id', (req,res) => {
-	const {id} = req.params;
-	const {oldPassword, newPassword} = req.body;
-
-	const salt = bcrypt.genSaltSync(10);
-	const hash = bcrypt.hashSync(newPassword, salt);
-
-	db.select('email')
-		.from('users')
-		.where('id', '=', id)
-		.then(mail => {
-			const eml = mail[0].email;
-			db.select('email', 'hash').from('login')
-				.where('email', '=', eml)
-				.then(data => {
-					const isValid = bcrypt.compareSync(oldPassword, data[0].hash); // true
-					if (isValid){
-						db('login')
-							.where('email', eml)
-							.update('hash', hash)
-							.returning('id', 'email')
-							.then(person => {
-								res.json(person[0]);
-							})
-							.catch(err => res.status(400).json('unable to edit'))
-					}
-					else{
-						res.status(400).json('incorrect password')
-					}
-				})
-				.catch(err => res.status(400).json('unable to access user'))
-		})
-})
+app.post('/account/:id', (req,res) => {account.editAccountPass(req,res,db,bcrypt)})
 
 //Getting user's account information
-app.get('/account/:id', (req,res) => {
-	const {id} = req.params;
-	db.select('*').from('users').where({id})
-		.then(user => {
-			if (user.length){
-				res.json(user[0]);
-			}
-			else{
-				res.status(400).json('Not found')
-			}
-		})
-		.catch(err => res.status(400).json('error getting user'))
-})
+app.get('/account/:id', (req,res) => {account.getAccount(req,res,db)})
 
 //Add note
-app.post('/sked/notes', (req, res) => {
-	const {date, msg, type} = req.body;
-
-	db('notes')
-		.returning('*')
-		.insert({
-			type: type,
-			date: date,
-			msg: msg,
-		})
-		.then(note => {
-			res.json(note[0]);
-		})
-		.catch(err => res.status(404).json('could not add note'))
-})
+app.post('/sked/notes', (req,res) => {sked.addNote(req,res,db)})
 
 //Getting all notes 
-app.get('/sked/allNotes', (req, res) => {
-	db.select('*')
-		.from('notes')
-		.then(notes => {
-			res.json(notes);
-		})
-		.catch(err => res.status(400).json('unable to get notes'))
-})
-
+app.get('/sked/allNotes', (req,res) => {sked.getNotes(req,res,db)})
 
 //Get active doctors
-app.get('/sked/docs', (req, res) => {
-	db.select('*')
-		.from('users')
-		.then(users => {
-			const arr = users.filter((user => {
-				return user.isactive === true;
-			}))
-			const docs = arr.sort(function(a, b){
-				if (a.lastname < b.lastname) { return -1; }
-				if (a.lastname > b.lastname) { return 1; }
-				return 0;
-			});
-			res.json(docs);
-		})
-		.catch(err => res.status(400).json('unable to get docs'))
-})
+app.get('/sked/docs', (req,res) => {sked.getDocs(req,res,db)})
 
 //Get entry types
-app.get('/sked/entries', (req,res) => {
-	db.select('*')
-		.from('entries')
-		.then(entries => {
-			const entrs = entries.filter((entry => {
-				return entry.type === 0;
-			}))
-			res.json(entrs);
-		})
-		.catch(err => res.status(400).json('unable to get entries'))
-})
-
-//Add entry type
-app.post('/entries', (req,res) => {
-	const {name, active} = req.body;
-
-	db('entries')
-		.returning('*')
-		.insert({
-			name: name,
-			isactive: active,
-			priority: -1,
-			type: 0
-		})
-		.then(entry => {
-			res.json(entry[0]);
-		})
-		.catch(err => res.status(404).json('could not add entry'))
-})
-
-//Delete entry type
-app.delete('/entries', (req, res) => {
-	const {id} = req.body;
-	
-	db('entries')
-		.returning('*')
-		.where('id', '=', id)
-		.del()
-		.then(entry => {
-			res.json(entry[0]);
-		})
-		.catch(err => res.status(400).json('unable to delete'))
-})
-
-//Edit entry type
-app.put('/entries', (req,res) => {
-	const {id, name, active} = req.body;
-
-	db('entries')
-		.where('id','=', id)
-		.update({
-			name: name,
-			isactive: active,
-		})
-		.returning('*')
-		.then(entries => {
-			res.json(entries[0]);
-		})
-		.catch(err => res.status(400).json('unable to edit'))
-})
+app.get('/sked/entries', (req,res) => {sked.getEntries(req,res,db)})
 
 //Admin assign entry
-app.post('/sked/assign', (req,res) => {
-	const {docId, typeId, date} = req.body;
-	let index = -1
-
-	db.select('worksked')
-		.from('users')
-		.where('id', '=', docId)
-		.then(sked => {
-			const arr = sked[0].worksked;
-			for (let j = 0; j < arr.length; j++){
-	 			if (arr[j].date === date){
-	 				index = j;
-	 				break;
-				}
-			}
-			if (index !== -1){
-				arr.splice(index,1);
-			}
-
-			arr.push({
-				id: typeId,
-				date: date
-			})
-
-			db('users')
-				.where('id', '=', docId)
-				.update('worksked', arr)
-				.returning('*')
-				.then(user => {
-					res.json(user[0])
-				})
-				.catch(err => res.status(400).json('unable to assign entry'))
-
-		})
-		.catch(err => res.status(400).json('unable to access user'))
-})
+app.post('/sked/assign', (req,res) => {sked.assignEntry(req,res,db)})
 
 //Admin delete call
-app.delete('/sked/assign', (req,res) => {
-	const {docId, date, typeId} = req.body;
-	
-	db.select('worksked')
-		.from('users')
-		.where('id', '=', docId)
-		.then(sked => {
-			const arr = sked[0].worksked;
-			for (let j = 0; j < arr.length; j++){
-	 			if (arr[j].date === date){
-	 				index = j;
-	 				break;
-				}
-			}
-			if (index !== -1){
-				arr.splice(index,1);
-			}
+app.delete('/sked/assign', (req,res) => {sked.deleteSkedCall(req,res,db)})
 
-			db('users')
-				.where('id', '=', docId)
-				.update('worksked', arr)
-				.returning('*')
-				.then(user => {
-					res.json(user[0])
-				})
-				.catch(err => res.status(400).json('unable to delete entry'))
+//Add entry type
+app.post('/entries', (req,res) => {entries.addEntry(req,res,db)})
 
-		})
-		.catch(err => res.status(400).json('unable to access user'))
-})
+//Delete entry type
+app.delete('/entries', (req,res) => {entries.deleteEntry(req,res,db)})
 
-
-//User forgot password
-app.post('/forgot', (req, res) => {
-	const {email} = req.body;
-	const password = generatePassword(16, false);
-	const salt = bcrypt.genSaltSync(10);
-	const hash = bcrypt.hashSync(password, salt);
-	let name = ''
-
-	db.select('*')
-		.from('users')
-		.where('email', email)
-		.then(user => {
-			name = user[0].firstname
-			db('login')
-				.where('email', email)
-				.update('hash', hash)
-				.returning('id','email')
-				.then(user => {
-					res.json(user[0]);
-					var mailOptions = {
-			  			from: 'menisked@gmail.com',
-			  			to: email,
-			  			subject: 'Recover your MeniSked Password.',
-			 	 		text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
-					};
-
-					transporter.sendMail(mailOptions, function(error, info){
-		  				if (error) {
-		    				res.json(error);
-		  				} 
-		  				if (info){
-		  					res.json(info.response);
-		  				}
-					});
-				})
-				.catch(err => res.status(400).json('unable to edit'))
-				})
-		.catch(err => res.status(400).json('unable to get user'))
-})
+//Edit entry type
+app.put('/entries', (req,res) => {entries.editEntry(req,res,db)})
 
 //Get published months
-app.get('/published', (req,res) => {
-	db.select('published')
-		.from('other')
-		.then(num => {
-			res.json(parseInt(num[0].published,10));
-		})
-		.catch(err => res.status(400).json('unable to get num'))
-})
+app.get('/published', (req,res) => {published.getMonths(req,res,db)})
 
 //Update published months
-app.put('/published', (req,res) => {
-	const {newNum} = req.body;
-	db('other').update('published', newNum)
-	.returning('published')
-	.then(published => {
-		res.json(parseInt(published[0],10));
-	})
-	.catch(err => res.status(400).json('unable to get published'))
-})
+app.put('/published', (req,res) => {published.updateMonths(req,res,db)})
 
 //Get all messages 
-app.get('/amessages', (req,res) => {
-	db.select('*')
-		.from('messages')
-		.then(messages => {
-			res.json(messages);
-		})
-		.catch(err => res.status(400).json('unable to get messages'))
-})
+app.get('/amessages', (req,res) => {messages.getAllMessages(req,res,db)})
 
 //Get employee's messages
-app.get('/emessages/:id', (req,res) => {
-	const {id} = req.params;
-	db.select('*')
-		.from('messages')
-		.where('docid', '=', id)
-		.then(messages => {
-			res.json(messages);
-		})
-		.catch(err => res.status(400).json('unable to get messages'))
-})
-
-//Employee making a request
-app.post('/request', (req,res) => {
-	const {docid, entryid, date, stamp} = req.body;
-
-	db('messages')
-		.returning('*')
-		.insert({
-			docid: docid,
-			entryid: entryid,
-			dates: [date],
-			stamp: stamp,
-			status: 'pending',
-			msg: ''
-		})
-		.then(message => {
-			res.json(message[0]);
-		})
-		.catch(err => res.status(404).json('could not add message'))
-})
+app.get('/emessages/:id', (req,res) => {messages.getEmployeeMessages(req,res,db)})
 
 //Admin responding to a pending request
-app.put('/amessages', (req,res) => {
-	const {id, status, msg, stamp} = req.body;
-	db('messages')
-		.where('id','=', id)
-		.update({
-			status: status,
-			msg: msg,
-			stamp: stamp
-		})
-		.returning('*')
-		.then(message => {
-			res.json(message[0]);
-		})
-		.catch(err => res.status(400).json('unable to respond'))
-})
+app.put('/amessages', (req,res) => {messages.messageResponse(req,res,db)})
+
+//Employee making a request
+app.post('/request', (req,res) => {request.addRequest(req,res,db)})
+
+//Employee editing a request's dates
+app.put('/request', (req,res) => {request.editRequest(req,res,db)})
 
 //Employee cancelling a request
 
-
-
-
-//Employee editing a request's dates
-app.put('/request', (req,res) => {
-	const {docid, entryid, date} = req.body;
-	db('messages')
-		.where('docid', '=', docid)
-		.andWhere('entryid', '=', entryid)
-		.update({
-			dates: db.raw('array_append(dates, ?)', [date]),
-		})
-		.returning('*')
-		.then(message => {
-			res.json(message[0]);
-		})
-		.catch(err => res.status(404).json('unable to edit'))
-})
 
 //Admin accepting a request (updates the employee's workSked)
 
