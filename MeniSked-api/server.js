@@ -4,9 +4,11 @@ var bcrypt = require('bcryptjs');
 const cors = require('cors');
 const nodemailer = require("nodemailer");
 var generatePassword = require("password-generator");
-// const pdf = require('html-pdf');
-// const pdfTemplate = require('./documents');
 const knex = require('knex');
+
+const register = require('./controllers/register');
+const login = require('./controllers/login');
+const holiday = require('./controllers/holiday');
 
 const db = knex({
 	client: 'pg',
@@ -244,162 +246,28 @@ var transporter = nodemailer.createTransport({
 });
 
 //Checks if a user's login info is correct
-app.post('/login', (req, res) => {
-	const {email, password} = req.body;
-	db.select('email', 'hash').from('login')
-		.where('email', '=', email)
-		.then(data => {
-			const isValid = bcrypt.compareSync(password, data[0].hash); // true
-			
-			if (isValid){
-				return db.select('*').from('users')
-					.where('email','=',email)
-					.then(user => {
-						res.json(user[0])
-					})
-					.catch(err => res.status(400).json('unable to get user'))
-			}
-			else{
-				res.status(400).json('wrong credentials')
-			}
-		})
-	.catch(err => res.status(400).json('wrong credentials'))
-})
-
+app.post('/login', (req, res) => {login.handleLogin(req,res,db,bcrypt)})
 
 //Adds a new user to the "database"
-app.post('/register', (req, res) => {
-	const {email, firstname, lastname, password, department, isadmin} = req.body;
-	const salt = bcrypt.genSaltSync(10);
-	const hash = bcrypt.hashSync(password, salt);
-	let colour = '';
-	let colours = '';
-
-	db.select('colours').from('other').then(clrs => {
-		colours = clrs[0].colours;
-		db('users').count('id').then(ctr => {
-			colour = colours[ctr[0].count];
-			db.transaction(trx => {
-				trx.insert({
-					hash: hash,
-					email: email
-				})
-				.into('login')
-				.returning('email')
-				.then(loginemail => {
-					return trx('users')
-						.returning('*')
-						.insert({
-							email: loginemail[0],
-							firstname: firstname,
-							lastname: lastname,
-							colour: colour,
-							department: department,
-							isadmin: isadmin,
-							isactive: true,
-							worksked: []
-						})
-						.then(user => {
-							res.json(user[0]);
-						})
-					})
-				.then(trx.commit)
-				.catch(trx.rollback)
-			})
-			.catch(err => res.status(400).json('error while registering'));
-		});
-	});
-})
+app.post('/register', (req,res) => {register.handleRegister(req, res, db, bcrypt) })
 
 //Adding a recurring holiday
-app.post('/holiday/r', (req,res) => {
-	const {name, month, day, isactive} = req.body;
-	db('rholidays')
-		.returning('*')
-		.insert({
-			name: name,
-			isactive: isactive,
-			month: month,
-			day: day
-		})
-		.then(holiday => {
-			res.json(holiday[0]);
-		})
-		.catch(err => res.status(404).json('could not add holiday'))
-})
+app.post('/holiday/r', (req,res) => {holiday.addRecurring(req,res,db)})
 
 //Editing a recurring holiday
-app.put('/holiday/r', (req,res) => {
-	const {isactive, name, month, day} = req.body;
-	db('rholidays')
-		.where('name','=', name)
-		.update({
-			isactive: isactive,
-			month: month,
-			day: day
-		})
-		.returning('*')
-		.then(all => {
-			res.json(all[0]);
-		})
-		.catch(err => res.status(400).json('unable to edit'))
-})
+app.put('/holiday/r', (req,res) => {holiday.editRecurring(req,res,db)})
 
 //Getting holidays
-app.get('/holiday/:type', (req,res) => {
-	const {type} = req.params;
-	db.select('*')
-		.from(type+'holidays')
-		.then(holidays => {
-			res.json(holidays);
-		})
-		.catch(err => res.status(400).json('unable to get holiday'))
-})
-
+app.get('/holiday/:type', (req,res) => {holiday.getHoliday(req,res,db)})
 
 //Deleting a holiday
-app.delete('/holiday/:type', (req,res) => {
-	const {type} = req.params;
-	const {name} = req.body;
-	
-	db(type+'holidays')
-		.returning('*')
-		.where('name', '=', name)
-		.del()
-		.then(holiday => {
-			res.json(holiday[0]);
-		})
-})
+app.delete('/holiday/:type', (req,res) => {holiday.deleteHoliday(req,res,db)})
 
 //Adding a non-recurring holiday
-app.post('/holiday/nr', (req,res) => {
-	const {name} = req.body;
-	db('nrholidays')
-		.returning('*')
-		.insert({
-			name: name,
-			eventsked: []
-		})
-		.then(holiday => {
-			res.json(holiday[0]);
-		})
-		.catch(err => res.status(404).json('could not add holiday'))
-})
+app.post('/holiday/nr', (req,res) => {holiday.addNonRecurring(req,res,db)})
 
 //Scheduling a non-recurring holiday
-app.put('/holiday/snr', (req,res) => {
-	const {name, year, month, day} = req.body;
-	db('nrholidays')
-		.where('name','=', name)
-		.update({
-			eventsked: db.raw('array_append(eventsked, ?)', [month+'/'+day+'/'+year])
-		})
-		.returning('*')
-		.then(all => {
-			res.json(all[0]);
-		})
-		.catch(err => res.status(400).json('unable to edit'))
-})
+app.put('/holiday/snr', (req,res) => {holiday.skedHoliday(req,res,db)})
 
 //Adding a call type
 app.post('/callTypes', (req,res) => {
