@@ -76,17 +76,17 @@ const deleteUser = (req,res,db) => {
 		.where('email', email)
 		.del()
 		.then(user => {
-			res.json(user[0]);
-		})
+			db('login')
+				.returning('*')
+				.where('email', email)
+				.del()
+				.then(user => {
+					res.json(user[0]);
+				})
+				.catch(err => res.status(400).json('unable to delete'))
+			})
 		.catch(err => res.status(400).json('unable to delete'))
-	db('login')
-		.returning('*')
-		.where('email', email)
-		.del()
-		.then(user => {
-			res.json(user[0]);
-		})
-		.catch(err => res.status(400).json('unable to delete'))
+	
 }
 
 const getUser = (req, res, db) => {

@@ -17,6 +17,7 @@ const entries = require('./controllers/entries');
 const messages = require('./controllers/messages');
 const request = require('./controllers/request');
 const published = require('./controllers/published');
+const departments = require('./controllers/departments');
 
 const db = knex({
 	client: 'pg',
@@ -354,8 +355,10 @@ app.put('/request', (req,res) => {request.editRequest(req,res,db)})
 
 //Employee cancelling a request
 
-
 //Admin accepting a request (updates the employee's workSked)
+
+//Get all the departments with MeniSked
+app.get('/departments', (req,res) => {departments.getDepts(req,res,db)})
 
 
 app.listen(3000, () => {
