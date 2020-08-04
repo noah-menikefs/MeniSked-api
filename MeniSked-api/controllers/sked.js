@@ -60,7 +60,7 @@ const assignEntry = (req,res, db) => {
 		.from('users')
 		.where('id', '=', docId)
 		.then(sked => {
-			const arr = sked[0].worksked;
+			let arr = sked[0].worksked;
 			for (let j = 0; j < arr.length; j++){
 	 			if (arr[j].date === date){
 	 				index = j;
@@ -121,10 +121,10 @@ const deleteSkedCall = (req,res, db) => {
 }
 
 module.exports = {
-	addNote: addNote,
-	getNotes: getNotes,
-	getDocs: getDocs,
-	getEntries: getEntries,
-	assignEntry: assignEntry,
-	deleteSkedCall: deleteSkedCall
+	addNote,
+	getNotes,
+	getDocs,
+	getEntries,
+	assignEntry,
+	deleteSkedCall
 }

@@ -81,11 +81,28 @@ const skedHoliday = (req,res,db) => {
 		.catch(err => res.status(400).json('unable to edit'))
 }
 
+const editSked = (req,res,db) => {
+	const {id, arr} = req.body;
+	db('nrholidays')
+		.where('id','=', id)
+		.update({
+			eventsked: arr
+		})
+		.returning('*')
+		.then(all => {
+			res.json(all[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+}
+
+
+
 module.exports = {
-	addRecurring: addRecurring,
-	editRecurring: editRecurring,
-	getHoliday: getHoliday,
-	deleteHoliday: deleteHoliday,
-	addNonRecurring: addNonRecurring,
-	skedHoliday: skedHoliday
+	addRecurring,
+	editRecurring,
+	getHoliday,
+	deleteHoliday,
+	addNonRecurring,
+	skedHoliday,
+	editSked
 }

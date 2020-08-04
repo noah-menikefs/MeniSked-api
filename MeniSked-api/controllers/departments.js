@@ -8,5 +8,5 @@ const getDepts = (req,res,db) => {
 }
 
 module.exports = {
-	getDepts: getDepts
+	getDepts
 }

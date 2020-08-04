@@ -1,4 +1,4 @@
-const addUser = (req, res, db, genPass) => {
+const addUser = (req, res, db, genPass, bcrypt,transporter) => {
 	const {email, firstname, lastname, department} = req.body;
 
 	const password = genPass(16, false);
@@ -41,7 +41,7 @@ const addUser = (req, res, db, genPass) => {
 						.then(user => {
 							transporter.sendMail(mailOptions, function(error, info){
   								if (error) {
-    								res.json(error);
+    								console.log(error);
   								}
 							})
 							res.json(user[0]);
@@ -104,8 +104,8 @@ const getUser = (req, res, db) => {
 }
 
 module.exports = {
-	addUser: addUser,
-	editUser: editUser,
-	deleteUser: deleteUser,
-	getUser: getUser
+	addUser,
+	editUser,
+	deleteUser,
+	getUser
 }

@@ -18,6 +18,6 @@ const getMonths = (req,res,db) => {
 }
 
 module.exports = {
-	updateMonths: updateMonths,
-	getMonths: getMonths
+	updateMonths,
+	getMonths
 }

@@ -115,8 +115,8 @@ const getCall = (req,res,db) => {
 }
 
 module.exports = {
-	addCall: addCall,
-	editCall: editCall,
-	deleteCall: deleteCall,
-	getCall: getCall
+	addCall,
+	editCall,
+	deleteCall,
+	getCall
 }

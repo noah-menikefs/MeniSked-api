@@ -249,7 +249,7 @@ var transporter = nodemailer.createTransport({
 app.post('/login', (req, res) => {login.handleLogin(req,res,db,bcrypt)})
 
 //User forgot password
-app.post('/forgot', (req, res) => {login.forgotPassword(req,res,db,bcrypt,genPass)})
+app.post('/forgot', (req, res) => {login.forgotPassword(req,res,db,bcrypt,genPass,transporter)})
 
 //Adds a new user to the "database"
 app.post('/register', (req,res) => {register.handleRegister(req, res, db, bcrypt) })
@@ -272,6 +272,9 @@ app.post('/holiday/nr', (req,res) => {holiday.addNonRecurring(req,res,db)})
 //Scheduling a non-recurring holiday
 app.put('/holiday/snr', (req,res) => {holiday.skedHoliday(req,res,db)})
 
+//Deleting a date from a holiday's schedule
+app.put('/holiday/esnr', (req,res) => {holiday.editSked(req,res,db)})
+
 //Adding a call type
 app.post('/callTypes', (req,res) => {calltype.addCall(req,res,db)})
 
@@ -285,7 +288,7 @@ app.delete('/callTypes', (req,res) => {calltype.deleteCall(req,res,db)})
 app.get('/callTypes', (req,res) => {calltype.getCall(req,res,db)})
 
 //Adding a user
-app.post('/people', (req,res) => {people.addUser(req,res,db,genPass)})
+app.post('/people', (req,res) => {people.addUser(req,res,db,genPass,bcrypt,transporter)})
 
 //Editing a user
 app.put('/people', (req,res) => {people.editUser(req,res,db)})
@@ -354,13 +357,16 @@ app.post('/request', (req,res) => {request.addRequest(req,res,db)})
 app.put('/request', (req,res) => {request.editRequest(req,res,db)})
 
 //Employee cancelling a request
+app.put('/drequest', (req,res) => {request.cancelRequest(req,res,db)})
 
 //Admin accepting a request (updates the employee's workSked)
+app.put('/arequest', (req,res) => {request.acceptRequest(req,res,db)})
 
 //Get all the departments with MeniSked
 app.get('/departments', (req,res) => {departments.getDepts(req,res,db)})
 
+let port = process.env.PORT || 3000;
 
-app.listen(3000, () => {
-	console.log('app is running on port 3000');
+app.listen(port, () => {
+	console.log(`app is running on port ${port}`);
 })

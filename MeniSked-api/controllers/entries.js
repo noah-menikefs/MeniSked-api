@@ -45,7 +45,7 @@ const editEntry = (req,res,db) => {
 }
 
 module.exports = {
-	addEntry: addEntry,
-	deleteEntry: deleteEntry,
-	editEntry: editEntry
+	addEntry,
+	deleteEntry,
+	editEntry
 }

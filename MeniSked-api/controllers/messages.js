@@ -36,7 +36,7 @@ const messageResponse = (req,res,db) => {
 
 
 module.exports = {
-	getAllMessages: getAllMessages,
-	getEmployeeMessages: getEmployeeMessages,
-	messageResponse: messageResponse
+	getAllMessages,
+	getEmployeeMessages,
+	messageResponse
 }

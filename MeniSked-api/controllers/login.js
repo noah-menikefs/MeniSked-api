@@ -20,7 +20,7 @@ const handleLogin = (req, res, db, bcrypt) => {
 	.catch(err => res.status(400).json('wrong credentials'))
 }
 
-const forgotPassword = (req, res, db, bcrypt, genPass) => {
+const forgotPassword = (req, res, db, bcrypt, genPass,transporter) => {
 	const {email} = req.body;
 	const password = genPass(16, false);
 	const salt = bcrypt.genSaltSync(10);
@@ -60,6 +60,6 @@ const forgotPassword = (req, res, db, bcrypt, genPass) => {
 }
 
 module.exports = {
-	handleLogin: handleLogin,
-	forgotPassword: forgotPassword
+	handleLogin,
+	forgotPassword
 }

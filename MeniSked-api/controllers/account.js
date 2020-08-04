@@ -80,7 +80,7 @@ const getAccount = (req,res,db) => {
 }
 
 module.exports = {
-	editAccountInfo: editAccountInfo,
-	editAccountPass: editAccountPass,
-	getAccount: getAccount
+	editAccountInfo,
+	editAccountPass,
+	getAccount
 }
