@@ -1,4 +1,4 @@
-const addRequest = (req,res,db) => {
+const addRequest = (req,res,db,transporter) => {
 	const {docid, entryid, date, stamp} = req.body;
 
 	db('messages')
@@ -13,6 +13,22 @@ const addRequest = (req,res,db) => {
 		})
 		.then(message => {
 			res.json(message[0]);
+			//MUST BE FIXED WHEN ADMIN IS CHANGED OR NEW DEPTS ARE INTRODUCED
+			var mailOptions = {
+			  	from: 'menisked@gmail.com',
+			  	to: 'noahmeni27@gmail.com',
+			  	subject: 'New Work Request',
+			 	text: 'Hey Peter'+',\n\nA user has made a new work request. Please navigate to the messages section of MeniSked to respond. It will be located at the top of your list of pending requests.\n\nThank you,\nThe MeniSked Team.'
+			};
+
+			transporter.sendMail(mailOptions, function(error, info){
+		  		if (error) {
+		    		res.json(error);
+		  		} 
+		  		if (info){
+		  			res.json(info.response);
+		  		}
+			});
 		})
 		.catch(err => res.status(404).json('could not add message'))
 }

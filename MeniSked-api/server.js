@@ -348,10 +348,10 @@ app.get('/amessages', (req,res) => {messages.getAllMessages(req,res,db)})
 app.get('/emessages/:id', (req,res) => {messages.getEmployeeMessages(req,res,db)})
 
 //Admin responding to a pending request
-app.put('/amessages', (req,res) => {messages.messageResponse(req,res,db)})
+app.put('/amessages', (req,res) => {messages.messageResponse(req,res,db,transporter)})
 
 //Employee making a request
-app.post('/request', (req,res) => {request.addRequest(req,res,db)})
+app.post('/request', (req,res) => {request.addRequest(req,res,db,transporter)})
 
 //Employee editing a request's dates
 app.put('/request', (req,res) => {request.editRequest(req,res,db)})
