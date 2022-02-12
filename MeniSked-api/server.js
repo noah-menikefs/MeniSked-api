@@ -1,3 +1,4 @@
+/*
 const express = require('express');
 const bodyParser = require('body-parser');
 var bcrypt = require('bcryptjs');
@@ -177,3 +178,6 @@ let port = process.env.PORT || 3000;
 app.listen(port, () => {
 	console.log(`app is running on port ${port}`);
 })
+
+
+*/
