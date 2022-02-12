@@ -1,8 +1,8 @@
-/*
+
 const express = require('express');
 const bodyParser = require('body-parser');
 var bcrypt = require('bcryptjs');
-//const cors = require('cors');
+const cors = require('cors');
 const nodemailer = require("nodemailer");
 var genPass = require("password-generator");
 const knex = require('knex');
@@ -179,5 +179,3 @@ app.listen(port, () => {
 	console.log(`app is running on port ${port}`);
 })
 
-
-*/
