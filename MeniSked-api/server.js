@@ -6,6 +6,7 @@ const cors = require('cors');
 const nodemailer = require("nodemailer");
 var genPass = require("password-generator");
 const knex = require('knex');
+const dotenv = require('dotenv');
 
 const register = require('./controllers/register');
 const login = require('./controllers/login');
@@ -30,6 +31,8 @@ const departments = require('./controllers/departments');
     }
 }); */
 
+dotenv.config();
+
 const db = knex({
 	client: 'pg',
   	connection: {
@@ -37,6 +40,8 @@ const db = knex({
 	ssl: true,
     }
 });
+
+console.log("DB URL" + process.env.DATABASE_URL)
 
 const app = express();
 
