@@ -20,13 +20,21 @@ const request = require('./controllers/request');
 const published = require('./controllers/published');
 const departments = require('./controllers/departments');
 
-const db = knex({
+/* const db = knex({
 	client: 'pg',
   	connection: {
     	host : '127.0.0.1',
     	user : 'noah.menikefs',
     	password : '',
     	database : 'meniSked'
+    }
+}); */
+
+const db = knex({
+	client: 'pg',
+  	connection: {
+    	connectionString : process.env.DATABASE_URL,
+	ssl: true,
     }
 });
 
