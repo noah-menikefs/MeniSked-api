@@ -20,23 +20,16 @@ const request = require('./controllers/request');
 const published = require('./controllers/published');
 const departments = require('./controllers/departments');
 
-/*const db = knex({
+const db = knex({
 	client: 'pg',
   	connection: {
     	host : 'ec2-44-206-29-56.compute-1.amazonaws.com',
     	user : 'ngpojcswictkol',
     	password : '623d7f459f5cf454c4079ed043e8d13e7d49b8bb259517e959583c0d38d26dd8',
-    	database : 'dbn6uovsj5m4ei',
-	port: 5432
+    	database : 'dbn6uovsj5m4ei'
     }
-}); */
-const db = knex({
-	client: 'pg',
-	connection: {
-		connectionString : "postgres://ngpojcswictkol:623d7f459f5cf454c4079ed043e8d13e7d49b8bb259517e959583c0d38d26dd8@ec2-44-206-29-56.compute-1.amazonaws.com:5432/dbn6uovsj5m4ei",
-		ssl: true,
-	}
-});
+}); 
+
 
 
 const app = express();
