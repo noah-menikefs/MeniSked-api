@@ -20,7 +20,7 @@ const request = require('./controllers/request');
 const published = require('./controllers/published');
 const departments = require('./controllers/departments');
 
-const db = knex({
+/*const db = knex({
 	client: 'pg',
   	connection: {
     	host : 'ec2-44-206-29-56.compute-1.amazonaws.com',
@@ -28,9 +28,12 @@ const db = knex({
     	password : '623d7f459f5cf454c4079ed043e8d13e7d49b8bb259517e959583c0d38d26dd8',
     	database : 'dbn6uovsj5m4ei'
     }
-}); 
+}); */
 
-
+const db = knex({
+	client: 'pg',
+	connection: "postgres://ngpojcswictkol:623d7f459f5cf454c4079ed043e8d13e7d49b8bb259517e959583c0d38d26dd8@ec2-44-206-29-56.compute-1.amazonaws.com:5432/dbn6uovsj5m4ei",
+});
 
 const app = express();
 
@@ -38,7 +41,7 @@ app.use(express.urlencoded({extended: true}))
 app.use(express.json());
 app.use(cors());
 
-app.set("db", db);
+//app.set("db", db);
 
 var transporter = nodemailer.createTransport({
   service: 'gmail',
