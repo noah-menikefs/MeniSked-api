@@ -6,7 +6,6 @@ const cors = require('cors');
 const nodemailer = require("nodemailer");
 var genPass = require("password-generator");
 const knex = require('knex');
-const dotenv = require('dotenv');
 
 const register = require('./controllers/register');
 const login = require('./controllers/login');
@@ -21,27 +20,15 @@ const request = require('./controllers/request');
 const published = require('./controllers/published');
 const departments = require('./controllers/departments');
 
-/* const db = knex({
-	client: 'pg',
-  	connection: {
-    	host : '127.0.0.1',
-    	user : 'noah.menikefs',
-    	password : '',
-    	database : 'meniSked'
-    }
-}); */
-
-dotenv.config();
-
 const db = knex({
 	client: 'pg',
   	connection: {
-    	connectionString : process.env.DATABASE_URL,
-	ssl: true,
+    	host : 'ec2-44-206-29-56.compute-1.amazonaws.com',
+    	user : 'ngpojcswictkol',
+    	password : '623d7f459f5cf454c4079ed043e8d13e7d49b8bb259517e959583c0d38d26dd8',
+    	database : 'dbn6uovsj5m4ei'
     }
-});
-
-console.log("DB URL" + process.env.DATABASE_URL)
+}); 
 
 const app = express();
 
