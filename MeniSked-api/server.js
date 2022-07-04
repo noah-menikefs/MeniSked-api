@@ -26,7 +26,8 @@ const db = knex({
     	host : 'ec2-44-206-29-56.compute-1.amazonaws.com',
     	user : 'ngpojcswictkol',
     	password : '623d7f459f5cf454c4079ed043e8d13e7d49b8bb259517e959583c0d38d26dd8',
-    	database : 'dbn6uovsj5m4ei'
+    	database : 'dbn6uovsj5m4ei',
+	port: 5432
     }
 }); 
 
