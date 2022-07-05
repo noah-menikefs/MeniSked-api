@@ -33,10 +33,8 @@ const departments = require("./controllers/departments");
 const db = knex({
   client: "pg",
   connection: {
-    connectionString:
-      "postgres://vfdbgzlsavrnjk:d3c2d6402dcb3315ff33a87dcf30d4698cac1055c5d33534b6cbfefde65d4041@ec2-54-243-67-199.compute-1.amazonaws.com:5432/d1b7k9s6tas9lh",
-
-    ssl: true,
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
   },
 });
 
