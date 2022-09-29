@@ -166,7 +166,7 @@ app.post("/sked/notes", (req, res) => {
 });
 
 //Edit note
-app.post("/sked/editNote", (req, res) => {
+app.put("/sked/editNote", (req, res) => {
   sked.editNote(req, res, db);
 })
 
