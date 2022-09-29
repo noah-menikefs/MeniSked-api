@@ -165,6 +165,16 @@ app.post("/sked/notes", (req, res) => {
   sked.addNote(req, res, db);
 });
 
+//Edit note
+app.post("/sked/editNote", (req, res) => {
+  sked.editNote(req, res, db);
+})
+
+//Delete note
+app.delete("/sked/deleteNote", (req, res) => {
+  sked.deleteNote(req, res, db);
+})
+
 //Getting all notes
 app.get("/sked/allNotes", (req, res) => {
   sked.getNotes(req, res, db);

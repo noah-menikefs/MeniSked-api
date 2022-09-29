@@ -14,6 +14,34 @@ const addNote = (req, res, db) => {
 		.catch(err => res.status(404).json('could not add note'))
 }
 
+const editNote = (req, res, db) => {
+	const {id, msg} = req.body;
+
+	db('notes')
+		.where('id','=', id)
+		.update({
+			msg: msg
+		})
+		.returning('*')
+		.then(all => {
+			res.json(all[0]);
+		})
+		.catch(err => res.status(400).json('unable to edit'))
+}
+
+const deleteNote = (req, res, db) => {
+	const { id } = req.body;
+
+	db('notes')
+		.returning('*')
+		.where('id', '=', id)
+		.del()
+		.then(entry => {
+			res.json(entry[0]);
+		})
+		.catch(err => res.status(400).json('unable to delete'))
+}
+
 const getNotes = (req, res, db) => {
 	db.select('*')
 		.from('notes')
@@ -122,6 +150,8 @@ const deleteSkedCall = (req,res, db) => {
 
 module.exports = {
 	addNote,
+	editNote,
+	deleteNote,
 	getNotes,
 	getDocs,
 	getEntries,
