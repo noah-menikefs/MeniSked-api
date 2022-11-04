@@ -230,6 +230,11 @@ app.get("/amessages", (req, res) => {
   messages.getAllMessages(req, res, db);
 });
 
+//Delete a message
+app.delete("/messages", (req, res) => {
+  entries.deleteMessage(req, res, db);
+});
+
 //Get employee's messages
 app.get("/emessages/:id", (req, res) => {
   messages.getEmployeeMessages(req, res, db);
