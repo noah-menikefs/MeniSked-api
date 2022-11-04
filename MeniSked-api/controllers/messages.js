@@ -7,6 +7,19 @@ const getAllMessages = (req,res,db) => {
 		.catch(err => res.status(400).json('unable to get messages'))
 }
 
+const deleteMessage = (req, res, db) => {
+	const {id, deleted, user} = req.body;
+	
+	db('messages')
+		.returning('*')
+		.where('id', '=', id)
+		.del()
+		.then(message => {
+			res.json(message[0]);
+		})
+		.catch(err => res.status(400).json('unable to delete'))
+}
+
 const getEmployeeMessages = (req,res,db) => {
 	const {id} = req.params;
 	db.select('*')
@@ -61,6 +74,7 @@ const messageResponse = (req,res,db,transporter) => {
 
 module.exports = {
 	getAllMessages,
+	deleteMessage,
 	getEmployeeMessages,
 	messageResponse
 }
