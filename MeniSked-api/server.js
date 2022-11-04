@@ -232,7 +232,7 @@ app.get("/amessages", (req, res) => {
 
 //Delete a message
 app.delete("/messages", (req, res) => {
-  entries.deleteMessage(req, res, db);
+  messages.deleteMessage(req, res, db);
 });
 
 //Get employee's messages
