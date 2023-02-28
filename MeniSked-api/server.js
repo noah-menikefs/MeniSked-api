@@ -34,7 +34,7 @@ const db = knex({
   client: "pg",
   connection: {
     connectionString:
-      "postgres://ghphablwkjoete:5c7c4250aa828fb07ed5dfb0caf107ae8ad68f6e4caa34ebd9f243cba2193b62@ec2-52-4-104-184.compute-1.amazonaws.com:5432/d1enefd9dsums5",
+      "postgres://qqogcyhrnghezt:2604351a7e13948c7d1ffe63c6fa94be4e82a5ec6cc8619dab9bfb554e8e6fc9@ec2-44-214-9-130.compute-1.amazonaws.com:5432/d6j2ofej76fart",
     ssl: { rejectUnauthorized: false },
   },
 });
