@@ -1,6 +1,6 @@
 const addRequest = (req,res,db,transporter) => {
 	const {docid, entryid, date, stamp} = req.body;
-
+	console.log(docid, entryid, date, stamp);
 	db('messages')
 		.returning('*')
 		.insert({
@@ -13,10 +13,9 @@ const addRequest = (req,res,db,transporter) => {
 		})
 		.then(message => {
 			res.json(message[0]);
-			//MUST BE FIXED WHEN ADMIN IS CHANGED OR NEW DEPTS ARE INTRODUCED
 			var mailOptions = {
-			  	from: 'menisked@gmail.com',
-			  	to: 'noahmeni27@gmail.com',
+			  	from: process.env.NODEMAILER_USER,
+			  	to: process.env.NODEMAILER_ADMIN,
 			  	subject: 'New Work Request',
 			 	text: 'Hey Peter'+',\n\nA user has made a new work request. Please navigate to the messages section of MeniSked to respond. It will be located at the top of your list of pending requests.\n\nThank you,\nThe MeniSked Team.'
 			};
