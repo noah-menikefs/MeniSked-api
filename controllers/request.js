@@ -1,6 +1,6 @@
 const addRequest = (req,res,db,transporter) => {
 	const {docid, entryid, date, stamp} = req.body;
-	console.log(docid, entryid, date, stamp);
+
 	db('messages')
 		.returning('*')
 		.insert({
@@ -29,7 +29,7 @@ const addRequest = (req,res,db,transporter) => {
 		  		}
 			});
 		})
-		.catch(err => res.status(404).json('could not add message'))
+		.catch(err => res.status(404).json(err + 'could not add message'))
 }
 
 const editRequest = (req,res,db) => {
