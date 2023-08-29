@@ -34,7 +34,7 @@ const db = knex({
   client: "pg",
   connection: {
     connectionString:
-      "postgres://qqogcyhrnghezt:2604351a7e13948c7d1ffe63c6fa94be4e82a5ec6cc8619dab9bfb554e8e6fc9@ec2-44-214-9-130.compute-1.amazonaws.com:5432/d6j2ofej76fart",
+      process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
   },
 });
@@ -51,7 +51,7 @@ var transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "menisked@gmail.com",
-    pass: 'PDM"jxRv4C*aAmAB',
+    pass: process.env.MAIL_PASS,
   },
 });
 
