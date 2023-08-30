@@ -1,36 +1,38 @@
-const addRequest = (req,res,db,transporter) => {
-	const {docid, entryid, date, stamp} = req.body;
+const addRequest = (req, res, db, transporter) => {
+    const { docid, entryid, date, stamp } = req.body;
 
-	db('messages')
-		.returning('*')
-		.insert({
-			dates: [date],
-			docid: docid,
-			entryid: entryid,
-			stamp: stamp,
-			status: 'pending',
-			msg: ''
-		})
-		.then(message => {
-			res.json(message[0]);
-			var mailOptions = {
-			  	from: process.env.NODEMAILER_USER,
-			  	to: process.env.NODEMAILER_ADMIN,
-			  	subject: 'New Work Request',
-			 	text: 'Hey Peter'+',\n\nA user has made a new work request. Please navigate to the messages section of MeniSked to respond. It will be located at the top of your list of pending requests.\n\nThank you,\nThe MeniSked Team.'
-			};
+    db('messages')
+        .returning('*')
+        .insert({
+            dates: [date],
+            docid: docid,
+            entryid: entryid,
+            stamp: stamp,
+            status: 'pending',
+            msg: ''
+        })
+        .then(message => {
+            // Respond immediately with the inserted message
+            res.json(message[0]);
 
-			transporter.sendMail(mailOptions, function(error, info){
-		  		if (error) {
-		    		res.json(error);
-		  		} 
-		  		if (info){
-		  			res.json(info.response);
-		  		}
-			});
-		})
-		.catch(err => res.status(404).json(`${err, date} could not add message`))
+            // Send the email
+            var mailOptions = {
+                from: process.env.NODEMAILER_USER,
+                to: process.env.NODEMAILER_ADMIN,
+                subject: 'New Work Request',
+                text: 'Hey Peter' + ',\n\nA user has made a new work request. Please navigate to the messages section of MeniSked to respond. It will be located at the top of your list of pending requests.\n\nThank you,\nThe MeniSked Team.'
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    // Log the error or handle it in a way that it doesn't affect the main response
+                    console.error("Failed to send email:", error);
+                }
+            });
+        })
+        .catch(err => res.status(404).json(`${err}, ${date} could not add message`));
 }
+
 
 const editRequest = (req,res,db) => {
 	const {docid, entryid, date} = req.body;

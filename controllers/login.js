@@ -20,43 +20,48 @@ const handleLogin = (req, res, db, bcrypt) => {
 	.catch(err => res.status(400).json('wrong credentials'))
 }
 
-const forgotPassword = (req, res, db, bcrypt, genPass,transporter) => {
-	const {email} = req.body;
-	const password = genPass(16, false);
-	const salt = bcrypt.genSaltSync(10);
-	const hash = bcrypt.hashSync(password, salt);
-	let name = ''
+const forgotPassword = (req, res, db, bcrypt, genPass, transporter) => {
+    const { email } = req.body;
+    const password = genPass(16, false);
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(password, salt);
+    let name = '';
 
-	db.select('*')
-		.from('users')
-		.where('email', email)
-		.then(user => {
-			name = user[0].firstname
-			db('login')
-				.where('email', email)
-				.update('hash', hash)
-				.returning('id','email')
-				.then(user => {
-					res.json(user[0]);
-					var mailOptions = {
-			  			from: 'menisked@gmail.com',
-			  			to: email,
-			  			subject: 'Recover your MeniSked Password.',
-			 	 		text: 'Hey '+name+',\n\nLooks like you forgot your password. Please login to your account using the temporary password: '+password+'. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
-					};
+    db.select('*')
+        .from('users')
+        .where('email', email)
+        .then(user => {
+            if (user.length === 0) {
+                throw new Error('User not found');
+            }
+            name = user[0].firstname;
+            return db('login')
+                .where('email', email)
+                .update('hash', hash)
+                .returning('id', 'email');
+        })
+        .then(user => {
+            // Respond immediately with the updated user details
+            res.json(user[0]);
 
-					transporter.sendMail(mailOptions, function(error, info){
-		  				if (error) {
-		    				res.json(error);
-		  				} 
-		  				if (info){
-		  					res.json(info.response);
-		  				}
-					});
-				})
-				.catch(err => res.status(400).json('unable to edit'))
-				})
-		.catch(err => res.status(400).json('unable to get user'))
+            // Construct the email and send
+            var mailOptions = {
+                from: 'menisked@gmail.com',
+                to: email,
+                subject: 'Recover your MeniSked Password.',
+                text: 'Hey ' + name + ',\n\nLooks like you forgot your password. Please login to your account using the temporary password: ' + password + '. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    // Log the error or handle it in a way that it doesn't affect the main response
+                    console.error("Failed to send email:", error);
+                }
+            });
+        })
+        .catch(err => {
+            res.status(400).json(err.message || 'Unexpected error occurred');
+        });
 }
 
 module.exports = {

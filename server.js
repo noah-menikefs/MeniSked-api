@@ -30,9 +30,7 @@ const db = knex({
 
 const app = express();
 
-app.use(cors({
-  origin: 'https://www.menisked.ca'
-}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
