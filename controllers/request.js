@@ -1,10 +1,13 @@
 const addRequest = (req,res,db,transporter) => {
 	const {docid, entryid, date, stamp} = req.body;
 
+	const jsonString = date;
+	const parsedArray = JSON.parse(jsonString);
+
 	db('messages')
 		.returning('*')
 		.insert({
-			dates: date,
+			dates: parsedArray,
 			docid: docid,
 			entryid: entryid,
 			stamp: stamp,
