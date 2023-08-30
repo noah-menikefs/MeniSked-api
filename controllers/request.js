@@ -4,9 +4,9 @@ const addRequest = (req,res,db,transporter) => {
 	db('messages')
 		.returning('*')
 		.insert({
+			dates: date,
 			docid: docid,
 			entryid: entryid,
-			dates: [date],
 			stamp: stamp,
 			status: 'pending',
 			msg: ''
