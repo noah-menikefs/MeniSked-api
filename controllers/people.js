@@ -8,7 +8,7 @@ const addUser = (req, res, db, genPass, bcrypt,transporter) => {
 	let colours = '';
 
 	var mailOptions = {
-	  	from: 'menisked@gmail.com',
+		from: process.env.NODEMAILER_USER,
 	  	to: email,
 	  	subject: 'Welcome to MeniSked!',
 	 	text: 'Hey '+firstname+',\n\nYour administrator has set up your MeniSked account and you have been given a temporary password: '+password+'. Please login using this password and immediately navigate to the account page. Here you will be able to change it to something easier to remember.\n\nThank you,\nThe MeniSked Team.'
@@ -69,24 +69,26 @@ const editUser = (req, res, db) => {
 		.catch(err => res.status(400).json('unable to edit'))
 }
 
-const deleteUser = (req,res,db) => {
-	const {email} = req.body;
-	db('users')
-		.returning('*')
-		.where('email', email)
-		.del()
-		.then(user => {
-			db('login')
-				.returning('*')
-				.where('email', email)
-				.del()
-				.then(user => {
-					res.json(user[0]);
-				})
-				.catch(err => res.status(400).json('unable to delete'))
-			})
-		.catch(err => res.status(400).json('unable to delete'))
-	
+const deleteUser = (req, res, db) => {
+    const { email } = req.body;
+
+    db('users')
+        .returning('*')
+        .where('email', email)
+        .del()
+        .then(user => {
+            return db('login')
+                .returning('*')
+                .where('email', email)
+                .del();
+        })
+        .then(user => {
+            res.json(user[0]);
+        })
+        .catch(err => {
+            console.error(err);  // Log the error for debugging purposes
+            res.status(400).json('unable to delete');
+        });
 }
 
 const getUser = (req, res, db) => {

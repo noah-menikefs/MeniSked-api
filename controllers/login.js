@@ -46,7 +46,7 @@ const forgotPassword = (req, res, db, bcrypt, genPass, transporter) => {
 
             // Construct the email and send
             var mailOptions = {
-                from: 'menisked@gmail.com',
+                from: process.env.NODEMAILER_USER,
                 to: email,
                 subject: 'Recover your MeniSked Password.',
                 text: 'Hey ' + name + ',\n\nLooks like you forgot your password. Please login to your account using the temporary password: ' + password + '. Once signed in, navigate to the account page and change your password to something easier to remember.\n\nThank you,\nThe MeniSked Team.'

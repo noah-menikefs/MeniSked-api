@@ -51,7 +51,7 @@ const messageResponse = (req, res, db, transporter) => {
                 .then(user => {
                     if (user.length > 0) {
                         var mailOptions = {
-                            from: 'menisked@gmail.com',
+                            from: process.env.NODEMAILER_USER,
                             to: user[0].email,
                             subject: 'Your Administrator Has Responded to Your Request',
                             text: 'Hey ' + user[0].firstname + ',\n\nYour administrator has responded to one of your work requests. To view their response, please navigate to the messages section of MeniSked. The request will appear at the top of your list.\n\nThank you,\nThe MeniSked Team.'
