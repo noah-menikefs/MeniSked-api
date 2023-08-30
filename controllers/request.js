@@ -3,11 +3,12 @@ const addRequest = (req,res,db,transporter) => {
 
 	const jsonString = date;
 	const parsedArray = JSON.parse(jsonString);
+	const dateArrayString = `{${parsedArray.join(',')}}`;
 
 	db('messages')
 		.returning('*')
 		.insert({
-			dates: parsedArray,
+			dates: db.raw(`?::text[]`, [dateArrayString]),
 			docid: docid,
 			entryid: entryid,
 			stamp: stamp,
