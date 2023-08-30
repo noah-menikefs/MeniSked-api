@@ -8,7 +8,7 @@ const addRequest = (req,res,db,transporter) => {
 	db('messages')
 		.returning('*')
 		.insert({
-			dates: date,
+			dates: [date],
 			docid: docid,
 			entryid: entryid,
 			stamp: stamp,
