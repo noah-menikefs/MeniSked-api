@@ -29,7 +29,7 @@ const addRequest = (req,res,db,transporter) => {
 		  		}
 			});
 		})
-		.catch(err => res.status(404).json(`${err} could not add message`))
+		.catch(err => res.status(404).json(`${err, date} could not add message`))
 }
 
 const editRequest = (req,res,db) => {
