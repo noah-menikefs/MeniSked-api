@@ -36,7 +36,7 @@ const handleRegister = (req, res, db, bcrypt) => {
 				.then(trx.commit)
 				.catch(trx.rollback)
 			})
-			.catch(err => res.status(400).json('error while registering'));
+			.catch(err => res.status(400).json(err + ' . Error while registering'));
 		});
 	});
 }
