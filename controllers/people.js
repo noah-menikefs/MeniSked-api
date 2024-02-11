@@ -49,7 +49,7 @@ const addUser = (req, res, db, genPass, bcrypt,transporter) => {
 					.then(trx.commit)
 					.catch(trx.rollback)
 				})
-			.catch(err => res.status(400).json(err+ ' error while registering'));
+			.catch(err => res.status(400).json(err+ ' while registering'));
 			});
 		});
 	});
